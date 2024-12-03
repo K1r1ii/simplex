@@ -7,16 +7,19 @@ public class Task {
     private ArrayList<Fraction> function;
     private Matrix matrix;
     private ArrayList<Integer> base;
+    private boolean isDecide;
 
-    public Task(ArrayList<Fraction> function, Matrix matrix, ArrayList<Integer> base){
+    public Task(ArrayList<Fraction> function, Matrix matrix, boolean isDecide,ArrayList<Integer> base){
         this.function = function;
         this.matrix = matrix;
+        this.isDecide = isDecide;
         this.base = base;
     }
 
-    public Task(ArrayList<Fraction> function, Matrix matrix){
+    public Task(ArrayList<Fraction> function, Matrix matrix, boolean isDecide){
         this.function = function;
         this.matrix = matrix;
+        this.isDecide = isDecide;
         this.base = null;
     }
 
@@ -43,6 +46,15 @@ public class Task {
     public void setBase(ArrayList<Integer> base) {
         this.base = base;
     }
+
+    public boolean isDecide() {
+        return isDecide;
+    }
+
+    public void setDecide(boolean decide) {
+        isDecide = decide;
+    }
+
     @Override
     public String toString(){
         String functionStr = "f = " + function.toString();

@@ -8,6 +8,7 @@ public class Fraction {
     BigDecimal num;
     BigDecimal denom;
     Boolean isDouble;
+    public static Fraction ZERO = new Fraction(0);
 
 
     public Fraction(int num, int denom){
@@ -85,6 +86,12 @@ public class Fraction {
         BigDecimal newF1Num = f1.num.multiply(f2.denom);
         BigDecimal newF2Num = f2.num.multiply(f1.denom);
         return newF1Num.min(newF2Num).equals(newF1Num) ? f1 : f2;
+    }
+
+    public Boolean isMore(Fraction other){
+        BigDecimal newThisNum = this.num.multiply(other.denom);
+        BigDecimal newOtherNum = other.num.multiply(this.denom);
+        return newThisNum.subtract(newOtherNum).doubleValue() >= 0;
     }
 
     public static Fraction parseFraction(String fractionStr){

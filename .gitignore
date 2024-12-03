@@ -14,4 +14,4 @@ out/
 !**/src/test/**/out/
 
 ### My ###
-test.*
+test*.*

@@ -10,22 +10,28 @@ public class ReadTask {
         try(BufferedReader reader = new BufferedReader(new FileReader(filePath))){
             Task currentTask;
 
-            int countVar = Integer.parseInt(reader.readLine()); // кол-во переменных
+            int countColumn = Integer.parseInt(reader.readLine()); // кол-во переменных
+
             ArrayList<Fraction> function = new ArrayList<>();
             String[] functionStr = reader.readLine().split(" +"); // коэффициенты исходной функции
-            //TODO: обработать исключение из Fraction.parseFraction(...)
+
             for(String num: functionStr){
                 function.add(Fraction.parseFraction(num));
             }
+            // если не введен свободный член функции
+            if(function.size() == countColumn){
+                countColumn += 1;
+            }
+
             int countRestrictions = Integer.parseInt(reader.readLine()); // кол-во ограничений
 
-            Matrix matrix = new Matrix(countRestrictions, countVar); // нулевая матрица
+            Matrix matrix = new Matrix(countRestrictions, countColumn); // нулевая матрица
             for(int i = 0; i < countRestrictions; i++){
                 String[] dataRow = reader.readLine().split(" +");
-                if (dataRow.length > countVar) {
+                if (dataRow.length > countColumn) {
                     throw new IndexOutOfBoundsException("Слишком много переменных!");
                 }
-                for(int j = 0; j < countVar; j++){
+                for(int j = 0; j < countColumn; j++){
                     matrix.addElementByIndex(i, j, Fraction.parseFraction(dataRow[j]));
                 }
             }
@@ -37,9 +43,9 @@ public class ReadTask {
                 for(String num: baseStr){
                     base.add(Integer.parseInt(num));
                 }
-                currentTask = new Task(function, matrix, base);
+                currentTask = new Task(function, matrix, false, base);
             } else{
-                currentTask = new Task(function, matrix);
+                currentTask = new Task(function, matrix, false);
             }
             return currentTask;
 
