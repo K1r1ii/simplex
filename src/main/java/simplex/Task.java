@@ -62,7 +62,7 @@ public class Task {
 
         if(base != null){
             String baseStr = "Base: " + base.toString();
-            return functionStr + "\n" + matrixStr + "\n" + baseStr;
+            return functionStr + "\n" + matrixStr + baseStr + "\n";
         } else {
             return functionStr + "\n" + matrixStr;
         }
