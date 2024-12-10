@@ -5,7 +5,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * Класс, реализующий считывание задачи с различных источников
+ */
 public class ReadTask {
+    /**
+     * Метод, реализующий считывание задачи симплекс-метода с файла
+     * @param filePath строка с путем к файлу с задачей
+     * @return объект класса <code>Task</code> содержащий считанную задачу
+     */
     public static Task readSM(String filePath ) {
         try(BufferedReader reader = new BufferedReader(new FileReader(filePath))){
             Task currentTask;
@@ -29,7 +37,7 @@ public class ReadTask {
             for(int i = 0; i < countRestrictions; i++){
                 String[] dataRow = reader.readLine().split(" +");
                 if (dataRow.length > countColumn) {
-                    throw new IndexOutOfBoundsException("Слишком много переменных!");
+                    return new Task("ERROR: Количество переменных больше возможного.");
                 }
                 for(int j = 0; j < countColumn; j++){
                     matrix.addElementByIndex(i, j, Fraction.parseFraction(dataRow[j]));
@@ -50,11 +58,9 @@ public class ReadTask {
             return currentTask;
 
         } catch (IOException e){
-            System.out.println("ERROR: " + e);
-            return null;
+            return new Task("ERROR: Некорректные данные.");
         } catch (NumberFormatException e){
-            System.out.println("ERROR: string is not number!");
-            return null;
+            return new Task("ERROR: Символ не является числом.");
         }
     }
 }

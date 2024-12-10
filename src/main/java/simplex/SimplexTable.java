@@ -2,13 +2,25 @@ package simplex;
 
 import java.util.ArrayList;
 
+/**
+ * Класс, для хранения текущего состояния задачи во время симплекс-метода.
+ */
 public class SimplexTable {
     private ArrayList<Fraction> function;
     private Matrix matrix;
     private ArrayList<Integer> base;
     private ArrayList<Integer> freeVars;
     private boolean isDecide;
+    private String errorMassage;
 
+    /**
+     * Конструктор
+     * @param function коэффициенты исходной функции
+     * @param matrix матрица ограничений
+     * @param base список номеров базисных переменных
+     * @param freeVars список номеров свободных переменных
+     * @param isDecide флаг решения задачи
+     */
     public SimplexTable(
             ArrayList<Fraction> function,
             Matrix matrix,
@@ -23,6 +35,18 @@ public class SimplexTable {
         this.isDecide = isDecide;
     }
 
+    /**
+     * Конструктор на случай обработки ошибок
+     * @param errorMessage сообщение об ошибке
+     */
+    public SimplexTable(String errorMessage) {
+        this.errorMassage = errorMessage;
+    }
+
+    /**
+     * Конструктор для метода Гаусса (переводит объект класс <code>Task</code> в объект класса <code>SimplexTable</code>)
+     * @param curTask объект класса <code>Task</code> содержащий исходную задачу.
+     */
     public SimplexTable(Task curTask){
         ArrayList<Fraction> curFunction = curTask.getFunction();
         int countRows = curTask.getMatrix().getMatrix().length;
@@ -61,6 +85,8 @@ public class SimplexTable {
 
     }
 
+
+
     public ArrayList<Fraction> getFunction() {
         return function;
     }
@@ -69,8 +95,8 @@ public class SimplexTable {
         this.function = function;
     }
 
-    public Matrix getMatrix() {
-        return matrix;
+    public Fraction[][] getMatrix() {
+        return matrix.getMatrix();
     }
 
     public void setMatrix(Matrix matrix) {
@@ -99,6 +125,14 @@ public class SimplexTable {
 
     public void setDecide(boolean decide) {
         isDecide = decide;
+    }
+
+    public String getErrorMassage() {
+        return errorMassage;
+    }
+
+    public void setErrorMassage(String errorMassage) {
+        this.errorMassage = errorMassage;
     }
 
     @Override
