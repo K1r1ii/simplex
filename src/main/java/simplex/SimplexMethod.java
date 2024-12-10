@@ -1,5 +1,7 @@
 package simplex;
 
+import dataStorage.*;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +17,14 @@ public class SimplexMethod {
      * @return объект класс <code>Solution</code> содержащий решение задачи: значение функции и вектор аргументов.
      */
     public static Solution autoMode(SimplexTable simplexTable){
-        SimplexTable newStep = simplexStep(simplexTable, -1, -1);
+        SimplexTable newStep = simplexStep(simplexTable, -1, -1, false);
         if(newStep.getErrorMassage() !=  null){
             return new Solution(newStep.getErrorMassage());
         }
 
         boolean isDecide = newStep.isDecide();
         while(!isDecide){
-            newStep = simplexStep(newStep, -1, -1);
+            newStep = simplexStep(newStep, -1, -1, false);
             if(newStep.getErrorMassage() !=  null){
                 return new Solution(newStep.getErrorMassage());
             }
@@ -39,7 +41,7 @@ public class SimplexMethod {
         int rowSize = newStep.getMatrix().length;
         int colSize = newStep.getMatrix()[0].length;
 
-        for(int i = 0; i < rowSize; i++){
+        for(int i = 0; i < newStep.getBase().size(); i++){
             solutionVector.set(newStep.getBase().get(i) - 1, newStep.getMatrix()[i][colSize - 1]);
         }
 
@@ -54,7 +56,8 @@ public class SimplexMethod {
      * @param supportColumn столбец таблицы, содержащий опорный элемент.
      * @return объект класса <code>SimplexTable</code>, содержащий новую симплекс-таблицу с новой базисной переменной.
      */
-    public static SimplexTable simplexStep(SimplexTable simplexTable, int supportRow, int supportColumn){
+    public static SimplexTable simplexStep(SimplexTable simplexTable, int supportRow, int supportColumn,
+                                           boolean artBasisMode){
         int sRow, sCol;
 
         ArrayList<Fraction> newFunction = simplexTable.getFunction(); // список, в котором будут новые коэффициенты функции
@@ -70,7 +73,8 @@ public class SimplexMethod {
         if (supportRow == -1 || supportColumn == -1){
             coords = findSupport(simplexTable);
         } else {
-            if (!checkSupport(simplexTable, supportRow, supportColumn)){
+
+            if (!artBasisMode && !checkSupport(simplexTable, supportRow, supportColumn)){
                 // опорный элемент не подходит
                 return new SimplexTable("ERROR: неверный опорный элемент.");
             }
@@ -90,6 +94,7 @@ public class SimplexMethod {
         sRow = coords.get(0);
         sCol = coords.get(1);
         Fraction sValue = matrix[sRow][sCol]; // значение опорного элемента
+        System.out.println("sValue: " + sValue);
 
         // замена базиса
         int curBaseNum = simplexTable.getBase().get(sRow);
@@ -142,6 +147,7 @@ public class SimplexMethod {
         }
 
         SimplexTable newTable = new SimplexTable(newFunction, newMatrix, newBase, newFreeV, false);
+        System.out.println(newTable);
         if (!checkBasisValue(newTable)) {
             return new SimplexTable("ERROR: исходный базис является ошибочным");
         }
@@ -183,14 +189,14 @@ public class SimplexMethod {
             // поиск ненулевого элемента
             Fraction minEl = new Fraction(0);
             for (int j = 0; j < mtx.getMatrix().length; j++) {
-                if (!Objects.equals(mtx.getMatrix()[j][i].num, BigDecimal.ZERO)) {
+                if (!Objects.equals(mtx.getMatrix()[j][i].getNum(), BigDecimal.ZERO)) {
                     minEl = mtx.getMatrix()[j][i];
                     indMinEl = j;
                 }
             }
 
             // проверка на нулевой столбец
-            if (Objects.equals(minEl.num, BigDecimal.ZERO)) {
+            if (Objects.equals(minEl.getNum(), BigDecimal.ZERO)) {
                 return new SimplexTable("ERROR: Базисный столбец состоит из нулей.");
             }
 
@@ -205,7 +211,7 @@ public class SimplexMethod {
         for(Fraction[] row: mtx.getMatrix()){
             boolean zeroFlag = false;
             for(Fraction rowEl: row){
-                if(!Objects.equals(rowEl.num, BigDecimal.ZERO)){
+                if(!Objects.equals(rowEl.getNum(), BigDecimal.ZERO)){
                     zeroFlag = true;
                     break;
                 }
@@ -239,7 +245,7 @@ public class SimplexMethod {
         for(int i = 0; i <= curTask.getFunction().size(); i++){
             newFunction.add(new Fraction(0));
         }
-        // вывод функции
+        // выражение функции
         int baseInd = 0;
         for(int i = 0; i < curTask.getFunction().size(); i++){
             if (curTask.getBase().contains(i + 1)){
@@ -251,6 +257,7 @@ public class SimplexMethod {
                     if(j == curTask.getFunction().size()){
                         minusCoef = curTask.getFunction().get(i)
                                 .multiply(mtx.getMatrix()[baseInd][j]);
+
                     } else {
                         minusCoef = curTask.getFunction().get(i)
                                 .multiply(Fraction.ZERO.difference(mtx.getMatrix()[baseInd][j]));
@@ -278,8 +285,8 @@ public class SimplexMethod {
         ArrayList<Integer> supportCoordinates = new ArrayList<>();
 
         boolean isDecided = true;
-        for(int i = 0; i < simplexTable.getFunction().size(); i++){
-            if (simplexTable.getFunction().get(i).isMore(Fraction.ZERO) ){
+        for(int i = 0; i < simplexTable.getFunction().size() - 1; i++){
+            if (simplexTable.getFunction().get(i).isMore(Fraction.ZERO) || simplexTable.getFunction().get(i).equals(Fraction.ZERO)){
                 // если находимся на базисном столбце или коэффициент функции неотрицательный
                 continue;
             }
@@ -356,7 +363,7 @@ public class SimplexMethod {
         int lastIndex = matrix[0].length - 1;
 
         for (Fraction[] fractions : matrix) {
-            if (!fractions[lastIndex].isMore(Fraction.ZERO)) {
+            if (!fractions[lastIndex].isMore(Fraction.ZERO) && !fractions[lastIndex].equals(Fraction.ZERO)) {
                 return false;
             }
         }

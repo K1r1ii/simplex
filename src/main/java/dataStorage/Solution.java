@@ -1,4 +1,4 @@
-package simplex;
+package dataStorage;
 
 import java.util.ArrayList;
 

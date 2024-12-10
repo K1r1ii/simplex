@@ -1,5 +1,9 @@
 package simplex;
 
+import dataStorage.Fraction;
+import dataStorage.Matrix;
+import dataStorage.Task;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -15,6 +19,7 @@ public class ReadTask {
      * @return объект класса <code>Task</code> содержащий считанную задачу
      */
     public static Task readSM(String filePath ) {
+        // TODO: изменить тип файла на json
         try(BufferedReader reader = new BufferedReader(new FileReader(filePath))){
             Task currentTask;
 

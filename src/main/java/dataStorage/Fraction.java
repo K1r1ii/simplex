@@ -1,4 +1,4 @@
-package simplex;
+package dataStorage;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -8,9 +8,9 @@ import java.util.Objects;
  * Класс, реализующий работу с обычными дробями, а также представляющий операции для работы с этими дробями.
  */
 public class Fraction {
-    BigDecimal num;
-    BigDecimal denom;
-    Boolean isDouble;
+    private BigDecimal num;
+    private BigDecimal denom;
+    private Boolean isDouble;
     public static Fraction ZERO = new Fraction(0);
 
     /**
@@ -140,7 +140,7 @@ public class Fraction {
     public Boolean isMore(Fraction other){
         BigDecimal newThisNum = this.num.multiply(other.denom);
         BigDecimal newOtherNum = other.num.multiply(this.denom);
-        return newThisNum.subtract(newOtherNum).doubleValue() >= 0;
+        return newThisNum.subtract(newOtherNum).doubleValue() > 0;
     }
 
     /**
@@ -214,6 +214,30 @@ public class Fraction {
         return gcd(num1.min(num2).abs(), num1.subtract(num2).abs());
     }
 
+    public BigDecimal getNum() {
+        return num;
+    }
+
+    public void setNum(BigDecimal num) {
+        this.num = num;
+    }
+
+    public BigDecimal getDenom() {
+        return denom;
+    }
+
+    public void setDenom(BigDecimal denom) {
+        this.denom = denom;
+    }
+
+    public Boolean getDouble() {
+        return isDouble;
+    }
+
+    public void setDouble(Boolean aDouble) {
+        isDouble = aDouble;
+    }
+
     @Override
     public String toString(){
         if (this.isDouble){
@@ -221,5 +245,16 @@ public class Fraction {
         }
         return denom.equals(BigDecimal.ONE) || num.equals(BigDecimal.ZERO) ? String.format("%d", num.intValue())
                 : String.format("%d/%d", num.intValue(), denom.intValue());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true; // Сравнение ссылок
+        if (obj == null || getClass() != obj.getClass()) return false; // Проверка типа
+
+        Fraction other = (Fraction) obj;
+
+        // Сравнение числителя и знаменателя
+        return Objects.equals(this.num, other.num) && Objects.equals(this.denom, other.denom);
     }
 }

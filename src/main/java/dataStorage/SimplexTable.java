@@ -1,4 +1,4 @@
-package simplex;
+package dataStorage;
 
 import java.util.ArrayList;
 
@@ -14,7 +14,7 @@ public class SimplexTable {
     private String errorMassage;
 
     /**
-     * Конструктор
+     * Конструктор для инициализации новой симплекс-таблицы
      * @param function коэффициенты исходной функции
      * @param matrix матрица ограничений
      * @param base список номеров базисных переменных
@@ -62,6 +62,7 @@ public class SimplexTable {
                 freeVars.add(i + 1);
             }
         }
+
         // редактирование коэффициентов функции
         function = new ArrayList<>();
         for (int i = 0; i < curFunction.size(); i++){
@@ -69,8 +70,8 @@ public class SimplexTable {
                 function.add(curFunction.get(i));
             }
         }
-        // редактирование матрицы
 
+        // редактирование матрицы
         for(int i = 0; i < countRows; i++){
             int countBase = 0;
             for(int j = 0; j < countColumns; j++){
