@@ -4,7 +4,6 @@ import dataStorage.*;
 import simplex.SimplexMethod;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Класс, реализующий методы для поиска начального базиса в задаче на поиск оптимального решения.
@@ -61,6 +60,11 @@ public class ArtificialBasisMethod {
         return new SimplexTable(newFunction, newMatrix, newBase, newFreeVars, false);
     }
 
+    /**
+     * Метод, реализующий автоматический режим выполнения метода искусственного базиса.
+     * @param curTask объект класса <code>Task</code>, содержащий текущую задачу.
+     * @return объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу готовую к использованию в основном алгоритме
+     */
     public static SimplexTable autoMode(Task curTask) {
         SimplexTable simplexTable = createSimplexTable(curTask); // переход к симплекс-таблице
         boolean isDecide = simplexTable.isDecide();
@@ -76,6 +80,14 @@ public class ArtificialBasisMethod {
     }
 
 
+    /**
+     * Метод, реализующий один шаг метода искусственного базиса с использованием симплекс-метода.
+     * @param simplexTable объект класса <code>SimplexTable</code>, содержащий текущую симплекс-таблицу.
+     * @param supportRow номер ряда, содержащего опорный элемент.
+     * @param supportColumn номер столбца, содержащего опорный элемент.
+     * @param originalFunction список с коэффициентами исходной функции.
+     * @return объект класса <code>SimplexTable</code>, содержащий следующий шаг симплекс-метода для данной задчаи.
+     */
     public static SimplexTable artificialBasisStep(
             SimplexTable simplexTable,
             int supportRow,
@@ -138,6 +150,12 @@ public class ArtificialBasisMethod {
         return -1;
     }
 
+    /**
+     * Метод, реализующий выражение новых коэффициентов целевой функции через найденный базис.
+     * @param simplexTable объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу.
+     * @param originalFunction список с коэффициентами исходной функции.
+     * @return список новых коэффициентов целевой функции.
+     */
     private static ArrayList<Fraction> expressionFunction(SimplexTable simplexTable, ArrayList<Fraction> originalFunction) {
         ArrayList<Fraction> newFunction = new ArrayList<>();
 
@@ -167,6 +185,12 @@ public class ArtificialBasisMethod {
         return newFunction;
     }
 
+    /**
+     * Метод, реализующий удаление столбцов с дополнительными переменными из матрицы ограничений, целевой функции и списка свободных переменных.
+     * @param simplexTable объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу.
+     * @param originalFunction список с коэффициентами исходной функции.
+     * @return объект класса <code>SimplexTable</code>, содержащий ту же симплекс-таблицу, но с удаленными дополнительными переменными
+     */
     private static SimplexTable deleteAdditionalColumn(SimplexTable simplexTable, ArrayList<Fraction> originalFunction) {
         ArrayList<Integer> additionalVars = new ArrayList<>();
         ArrayList<Integer> freeVars = simplexTable.getFreeVars();
@@ -219,6 +243,12 @@ public class ArtificialBasisMethod {
         return new SimplexTable(newFunction, newMatrix, simplexTable.getBase(), newFreeVars, simplexTable.isDecide());
     }
 
+    /**
+     * Метод, реализующий проверку коэффициентов целевой функции равенство нулю.
+     * @param function список с коэффициентами целевой функции.
+     * @return <code>true</code> если все коэффициенты равны 0,
+     *         <code>false</code> если хотя бы один коэффициент не равен 0.
+     */
     private static boolean checkNullFunction(ArrayList<Fraction> function) {
         for (Fraction i : function) {
             if (!i.equals(Fraction.ZERO)) {
@@ -229,6 +259,11 @@ public class ArtificialBasisMethod {
         return true;
     }
 
+    /**
+     * Метод, реализующий удаление нулевой строки из симплекс-таблицы.
+     * @param simplexTable объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу.
+     * @return объект класса <code>SimplexTable</code>, содержащий ту же симплекс-таблицу, но с удаленными нулевыи строками.
+     */
     private static SimplexTable deleteNullString(SimplexTable simplexTable){
         ArrayList<Integer> curBase = simplexTable.getBase();
         Fraction[][] matrix = simplexTable.getMatrix();

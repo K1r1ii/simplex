@@ -38,7 +38,6 @@ public class SimplexMethod {
         }
 
         // заполнение базисных значений
-        int rowSize = newStep.getMatrix().length;
         int colSize = newStep.getMatrix()[0].length;
 
         for(int i = 0; i < newStep.getBase().size(); i++){
@@ -147,7 +146,6 @@ public class SimplexMethod {
         }
 
         SimplexTable newTable = new SimplexTable(newFunction, newMatrix, newBase, newFreeV, false);
-        System.out.println(newTable);
         if (!checkBasisValue(newTable)) {
             return new SimplexTable("ERROR: исходный базис является ошибочным");
         }
@@ -188,15 +186,16 @@ public class SimplexMethod {
 
             // поиск ненулевого элемента
             Fraction minEl = new Fraction(0);
-            for (int j = 0; j < mtx.getMatrix().length; j++) {
+            for (int j = i; j < mtx.getMatrix().length; j++) {
                 if (!Objects.equals(mtx.getMatrix()[j][i].getNum(), BigDecimal.ZERO)) {
                     minEl = mtx.getMatrix()[j][i];
                     indMinEl = j;
+                    break;
                 }
             }
 
             // проверка на нулевой столбец
-            if (Objects.equals(minEl.getNum(), BigDecimal.ZERO)) {
+            if (Objects.equals(minEl.getNum(), BigDecimal.ZERO) && i + 1 < curTask.getBase().size()) {
                 return new SimplexTable("ERROR: Базисный столбец состоит из нулей.");
             }
 
@@ -207,6 +206,8 @@ public class SimplexMethod {
             }
         }
 
+
+        // проверка базиса
         int rang = 0;
         for(Fraction[] row: mtx.getMatrix()){
             boolean zeroFlag = false;
@@ -239,7 +240,6 @@ public class SimplexMethod {
         for(int i = curTask.getBase().size() - 1; i >= 0 ; i--){
             mtx.replaceColumns(curTask.getBase().get(i) - 1, i);
         }
-
         // список для измененной функции заполненный 0
         ArrayList<Fraction> newFunction = new ArrayList<>();
         for(int i = 0; i <= curTask.getFunction().size(); i++){

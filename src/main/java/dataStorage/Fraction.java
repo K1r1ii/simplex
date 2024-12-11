@@ -34,6 +34,26 @@ public class Fraction {
     }
 
     /**
+     * Конструктор, предназначенный для внутреннего использования, чтобы избежать потери точности.
+     * @param num числитель типа BigDecimal
+     * @param denom знаменатель типа BigDecimal
+     */
+    public Fraction(BigDecimal num, BigDecimal denom) {
+        if (denom.equals(BigDecimal.ZERO) && !num.equals(BigDecimal.ZERO)){
+            System.out.println("ERROR: denominator can't be 0!");
+            return;
+        }
+        if (denom.compareTo(BigDecimal.ZERO) < 0){
+            this.num = num.multiply(BigDecimal.valueOf(-1));
+            this.denom = denom.multiply(BigDecimal.valueOf(-1));
+        } else{
+            this.num = num;
+            this.denom = denom;
+        }
+        isDouble = false;
+    }
+
+    /**
      * Конструктор для сохранения целого числа
      * @param num целое число
      */
@@ -74,7 +94,7 @@ public class Fraction {
         } else{
             BigDecimal newNum = f1.num.multiply(f2.denom).add(f2.num.multiply(f1.denom));
             BigDecimal newDenom = f1.denom.multiply(f2.denom);
-            Fraction sumFraction =  new Fraction(newNum.intValue(), newDenom.intValue());
+            Fraction sumFraction =  new Fraction(newNum, newDenom);
             sumFraction.reducing();
             return sumFraction;
         }
@@ -94,7 +114,7 @@ public class Fraction {
         if(f1.isDouble || f2.isDouble){
             multiFraction = new Fraction(newNum.doubleValue());
         } else {
-            multiFraction = new Fraction(newNum.intValue(), newDenum.intValue());
+            multiFraction = new Fraction(newNum, newDenum);
         }
         multiFraction.reducing();
         return multiFraction;
@@ -113,7 +133,7 @@ public class Fraction {
         } else {
             BigDecimal newNum = f1.num.multiply(f2.denom).subtract(f2.num.multiply(f1.denom));
             BigDecimal newDenom = f1.denom.multiply(f2.denom);
-            Fraction diffFraction = new Fraction(newNum.intValue(), newDenom.intValue());
+            Fraction diffFraction = new Fraction(newNum, newDenom);
             diffFraction.reducing();
             return diffFraction;
         }
@@ -207,7 +227,7 @@ public class Fraction {
      */
     private static BigDecimal gcd(BigDecimal num1, BigDecimal num2){
         if (Objects.equals(num1, BigDecimal.ZERO) && Objects.equals(num2, BigDecimal.ZERO)) return BigDecimal.ONE;
-        if (Objects.equals(num1, num2)) return num1;
+        if (Objects.equals(num1, num2)) return num2;
         if (Objects.equals(num1, BigDecimal.ZERO)) return num2;
         if (Objects.equals(num2, BigDecimal.ZERO)) return num1;
 
@@ -244,7 +264,7 @@ public class Fraction {
             return String.format("%f", num.doubleValue());
         }
         return denom.equals(BigDecimal.ONE) || num.equals(BigDecimal.ZERO) ? String.format("%d", num.intValue())
-                : String.format("%d/%d", num.intValue(), denom.intValue());
+                : num + "/" + denom;
     }
 
     @Override
