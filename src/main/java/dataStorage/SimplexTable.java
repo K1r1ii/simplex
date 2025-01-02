@@ -1,6 +1,7 @@
 package dataStorage;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Класс, для хранения текущего состояния задачи во время симплекс-метода.
@@ -10,8 +11,14 @@ public class SimplexTable {
     private Matrix matrix;
     private ArrayList<Integer> base;
     private ArrayList<Integer> freeVars;
+    private String taskType;
+    private String fracType;
+    private String mode;
     private boolean isDecide;
     private String errorMassage;
+
+    public static String MIN_TYPE = "min";
+    public static String MAX_TYPE = "max";
 
     /**
      * Конструктор для инициализации новой симплекс-таблицы
@@ -26,13 +33,19 @@ public class SimplexTable {
             Matrix matrix,
             ArrayList<Integer> base,
             ArrayList<Integer> freeVars,
-            boolean isDecide
+            boolean isDecide,
+            String taskType,
+            String fracType,
+            String mode
     ) {
         this.function = function;
         this.matrix = matrix;
         this.base = base;
         this.freeVars = freeVars;
         this.isDecide = isDecide;
+        this.taskType = taskType;
+        this.fracType = fracType;
+        this.mode = mode;
     }
 
     /**
@@ -67,7 +80,12 @@ public class SimplexTable {
         function = new ArrayList<>();
         for (int i = 0; i < curFunction.size(); i++){
             if(!base.contains(i + 1)){
-                function.add(curFunction.get(i));
+                if(Objects.equals(taskType, MAX_TYPE)) {
+                    function.add(Fraction.ZERO.subtract(curFunction.get(i)));
+                } else {
+                    function.add(curFunction.get(i));
+                }
+
             }
         }
 
@@ -83,6 +101,9 @@ public class SimplexTable {
             }
         }
         isDecide = curTask.isDecide();
+        taskType = curTask.getTaskType();
+        fracType = curTask.getFracType();
+        mode = curTask.getMode();
 
     }
 
@@ -136,13 +157,40 @@ public class SimplexTable {
         this.errorMassage = errorMassage;
     }
 
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
+
+    public String getFracType() {
+        return fracType;
+    }
+
+    public void setFracType(String fracType) {
+        this.fracType = fracType;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
     @Override
     public String toString(){
-        String functionStr = "f = " + function.toString();
-        String matrixStr = "Restrictions:\n" + matrix.toString();
+        String functionStr = "\nf = " + function.toString();
+        String matrixStr = "\nRestrictions:\n" + matrix.toString();
+        String taskTypeStr = "\nTask type: " + taskType;
+        String fracTypeStr = "\nFractions type: " + fracType;
+        String modeStr = "\nMode: " + mode;
 
         String baseStr = "Base: " + base.toString();
         String freeVStr = "Free: " + freeVars.toString();
-        return functionStr + "\n" + matrixStr + baseStr + "\n" + freeVStr + "\n";
+        return functionStr + matrixStr + baseStr + "\n" + freeVStr + taskTypeStr + fracTypeStr + modeStr;
     }
 }

@@ -85,7 +85,7 @@ public class Matrix {
         Fraction firstEl = matrix[iNullingRow][curColumn];
         for(int i = curColumn; i < matrix[iNullingRow].length; i++){
             matrix[iNullingRow][i] = matrix[iNullingRow][i]
-                    .difference(matrix[iCurrentRow][i]
+                    .subtract(matrix[iCurrentRow][i]
                             .multiply(firstEl));
         }
     }

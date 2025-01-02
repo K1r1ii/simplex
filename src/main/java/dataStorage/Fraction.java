@@ -1,122 +1,119 @@
 package dataStorage;
 
-import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.Objects;
 
 /**
  * Класс, реализующий работу с обычными дробями, а также представляющий операции для работы с этими дробями.
  */
 public class Fraction {
-    private BigDecimal num;
-    private BigDecimal denom;
-    private Boolean isDouble;
-    public static Fraction ZERO = new Fraction(0);
+    private long num;
+    private long denom;
+    private boolean isDouble;
+    private String fracType;
+
+    public static final Fraction ZERO = new Fraction(0);
+    public static final Fraction ONE = new Fraction(1);
+    public static final String DECIMAL = "decimal";
+    public static final String ORDINARY = "ordinary";
+    public static final String INTEGER = "integer";
 
     /**
      * Конструктор для сохранения обычной дроби
      * @param num числитель
      * @param denom знаменатель
      */
-    public Fraction(int num, int denom){
-        if (denom == 0 && num != 0){
-            System.out.println("ERROR: denominator can't be 0!");
-            return;
+    public Fraction(long num, long denom) {
+        if (denom == 0 && num != 0) {
+            throw new ArithmeticException("ERROR: denominator can't be 0!");
         }
-        if (denom < 0){
-            this.num = new BigDecimal(-num);
-            this.denom = new BigDecimal(-denom);
-        } else{
-            this.num = new BigDecimal(num);
-            this.denom = new BigDecimal(denom);
-        }
-        isDouble = false;
-    }
-
-    /**
-     * Конструктор, предназначенный для внутреннего использования, чтобы избежать потери точности.
-     * @param num числитель типа BigDecimal
-     * @param denom знаменатель типа BigDecimal
-     */
-    public Fraction(BigDecimal num, BigDecimal denom) {
-        if (denom.equals(BigDecimal.ZERO) && !num.equals(BigDecimal.ZERO)){
-            System.out.println("ERROR: denominator can't be 0!");
-            return;
-        }
-        if (denom.compareTo(BigDecimal.ZERO) < 0){
-            this.num = num.multiply(BigDecimal.valueOf(-1));
-            this.denom = denom.multiply(BigDecimal.valueOf(-1));
-        } else{
+        if (denom < 0) {
+            this.num = -num;
+            this.denom = -denom;
+        } else {
             this.num = num;
             this.denom = denom;
         }
         isDouble = false;
+        fracType = ORDINARY;
     }
 
     /**
      * Конструктор для сохранения целого числа
      * @param num целое число
      */
-    public Fraction(int num){
-        this.num = new BigDecimal(num);
-        this.denom = BigDecimal.ONE;
+    public Fraction(long num) {
+        this.num = num;
+        this.denom = 1;
         isDouble = false;
+        fracType = INTEGER;
     }
 
     /**
      * Конструктор для сохранения десятичной дроби
      * @param num десятичная дробь
      */
-    public Fraction(double num){
-        this.num = new BigDecimal(num);
-        this.denom = BigDecimal.ONE;
+    public Fraction(double num) {
+        String[] parts = Double.toString(num).split("\\.");
+        long decimalPlaces = parts[1].length();
+        long denom = (long) Math.pow(10, decimalPlaces);
+
+        this.num = (long) (num * denom);
+        this.denom = denom;
         isDouble = true;
+        fracType = DECIMAL;
+        reducing();
     }
 
-    /**
-     * Метод для конвертации числа в тип <code>BigDecimal</code>
-     * @return объект класса <code>BigDecimal</code> содержащий входное число.
-     */
-    private BigDecimal toDecimalValue() {
-        return this.num.divide(this.denom, MathContext.DECIMAL128);
+
+    public Fraction sum(Fraction other) {
+        return sum(this, other);
+    }
+
+
+    public Fraction multiply(Fraction other) {
+        return multiply(this, other);
+    }
+
+
+    public Fraction subtract(Fraction other) {
+        return subtract(this, other);
+    }
+
+
+    public Fraction divide(Fraction other) {
+        return divide(this, other);
     }
 
     /**
      * Статический метод, реализующий сложение двух дробей.
      * @param f1 первая дробь
      * @param f2 вторая дробь
-     * @return объект класса <code>Fraction</code>  содержащий результат сложения двух дробей.
+     * @return объект класса <code>Fraction</code> содержащий результат сложения двух дробей.
      */
-    public static Fraction sum(Fraction f1, Fraction f2){
-        if(f1.isDouble || f2.isDouble){
-            BigDecimal res = f1.toDecimalValue().add(f2.toDecimalValue());
-            return new Fraction(res.doubleValue());
-        } else{
-            BigDecimal newNum = f1.num.multiply(f2.denom).add(f2.num.multiply(f1.denom));
-            BigDecimal newDenom = f1.denom.multiply(f2.denom);
-            Fraction sumFraction =  new Fraction(newNum, newDenom);
+    public static Fraction sum(Fraction f1, Fraction f2) {
+        long newNum = f1.num * f2.denom + f2.num * f1.denom;
+        long newDenom = f1.denom * f2.denom;
+        Fraction sumFraction = new Fraction(newNum, newDenom);
+        if (Objects.equals(f1.fracType, ORDINARY) && Objects.equals(f2.fracType, ORDINARY)) {
             sumFraction.reducing();
-            return sumFraction;
         }
+        return sumFraction;
     }
+
 
     /**
      * Статический метод, реализующий умножение двух дробей.
      * @param f1 первая дробь
      * @param f2 вторая дробь
-     * @return объект класса <code>Fraction</code>  содержащий результат перемножения двух дробей.
+     * @return объект класса <code>Fraction</code> содержащий результат перемножения двух дробей.
      */
-    public static Fraction multiply(Fraction f1, Fraction f2){
-        Fraction multiFraction;
-        BigDecimal newNum = f1.num.multiply(f2.num);
-        BigDecimal newDenum = f1.denom.multiply(f2.denom);
-
-        if(f1.isDouble || f2.isDouble){
-            multiFraction = new Fraction(newNum.doubleValue());
-        } else {
-            multiFraction = new Fraction(newNum, newDenum);
+    public static Fraction multiply(Fraction f1, Fraction f2) {
+        long newNum = f1.num * f2.num;
+        long newDenom = f1.denom * f2.denom;
+        Fraction multiFraction = new Fraction(newNum, newDenom);
+        if (Objects.equals(f1.fracType, ORDINARY) && Objects.equals(f2.fracType, ORDINARY)) {
+            multiFraction.reducing();
         }
-        multiFraction.reducing();
         return multiFraction;
     }
 
@@ -124,44 +121,40 @@ public class Fraction {
      * Статический метод, реализующий разность двух дробей.
      * @param f1 первая дробь
      * @param f2 вторая дробь
-     * @return объект класса <code>Fraction</code>  содержащий результат разности двух дробей.
+     * @return объект класса <code>Fraction</code> содержащий результат разности двух дробей.
      */
-    public static Fraction difference(Fraction f1, Fraction f2){
-        if(f1.isDouble || f2.isDouble){
-            BigDecimal res = f1.toDecimalValue().subtract(f2.toDecimalValue());
-            return new Fraction(res.doubleValue());
-        } else {
-            BigDecimal newNum = f1.num.multiply(f2.denom).subtract(f2.num.multiply(f1.denom));
-            BigDecimal newDenom = f1.denom.multiply(f2.denom);
-            Fraction diffFraction = new Fraction(newNum, newDenom);
+    public static Fraction subtract(Fraction f1, Fraction f2) {
+        long newNum = f1.num * f2.denom - f2.num * f1.denom;
+        long newDenom = f1.denom * f2.denom;
+        Fraction diffFraction = new Fraction(newNum, newDenom);
+        if (Objects.equals(f1.fracType, ORDINARY) && Objects.equals(f2.fracType, ORDINARY)) {
             diffFraction.reducing();
-            return diffFraction;
         }
+        return diffFraction;
     }
 
     /**
-     * Статический метод, реализующий поиск минимальной дроби из двух.
+     * Статический метод, реализующий деление двух дробей.
      * @param f1 первая дробь
      * @param f2 вторая дробь
-     * @return объект класса <code>Fraction</code>  содержащий минимальную дробь.
+     * @return объект класса <code>Fraction</code> содержащий результат деления двух дробей.
      */
-    public static Fraction min(Fraction f1, Fraction f2){
-        BigDecimal newF1Num = f1.num.multiply(f2.denom);
-        BigDecimal newF2Num = f2.num.multiply(f1.denom);
-        return newF1Num.min(newF2Num).equals(newF1Num) ? f1 : f2;
+    public static Fraction divide(Fraction f1, Fraction f2) {
+        if (f2.num == 0) {
+            throw new ArithmeticException("Деление на 0!");
+        }
+        return multiply(f1, f2.getReverseFraction());
     }
 
     /**
-     * Метод, реализующий проверку: является ли дробь больше переданной.
-     * @param other вторая дробь для сравнения
-     * @return <code>true</code> если текущая дробь больше
-     *         <code>false</code> если текущая дробь меньше
+     * Метод для сокращения дроби.
      */
-    public Boolean isMore(Fraction other){
-        BigDecimal newThisNum = this.num.multiply(other.denom);
-        BigDecimal newOtherNum = other.num.multiply(this.denom);
-        return newThisNum.subtract(newOtherNum).doubleValue() > 0;
+    public void reducing() {
+        long gcd = gcd(num, denom);
+        num /= gcd;
+        denom /= gcd;
     }
+
 
     /**
      * Метод, реализующий конвертацию строки с обычной дробью в объект класса <code>Fraction</code>
@@ -171,7 +164,7 @@ public class Fraction {
      */
     public static Fraction parseFraction(String fractionStr) throws NumberFormatException {
         if (fractionStr.matches("-?\\d+")){
-            return new Fraction(Integer.parseInt(fractionStr));
+            return new Fraction(Long.parseLong(fractionStr));
         }
         if (fractionStr.matches("[+-]?\\d*\\.?\\d+")) {
             return new Fraction(Double.parseDouble(fractionStr));
@@ -181,100 +174,116 @@ public class Fraction {
             throw new NumberFormatException("ERROR: incorrect fraction in file! Error string: " + fractionStr);
         }
         try{
-            return new Fraction(Integer.parseInt(fractionArr[0]), Integer.parseInt(fractionArr[1]));
+            return new Fraction(Long.parseLong(fractionArr[0]), Long.parseLong(fractionArr[1]));
         } catch (NumberFormatException ex){
             throw new NumberFormatException("ERROR: incorrect fraction in file! Error string: " + fractionStr);
         }
     }
 
-    public Fraction sum(Fraction otherFraction){
-        return sum(this, otherFraction);
-    }
-
-    public Fraction difference(Fraction otherFraction){
-        return difference(this, otherFraction);
-    }
-
-    public Fraction multiply(Fraction otherFraction){
-        return multiply(this, otherFraction);
-    }
-
-    /**
-     * Метод для сокращения дроби.
-     */
-    public void reducing(){
-        BigDecimal reducFrac = gcd(num, denom);
-        num = num.divide(reducFrac);
-        denom = denom.divide(reducFrac);
-    }
 
     /**
      * Метод, реализующий "переворот" дроби
-     * @return объект класса <code>Fraction</code>  содержащий перевернутую дробь
+     * @return объект класса <code>Fraction</code> содержащий перевернутую дробь
      */
-    public Fraction getReverseFraction(){
-        if(num.equals(BigDecimal.ZERO)) {
-            return this;
+    public Fraction getReverseFraction() {
+        if (num == 0) {
+            throw new ArithmeticException("Cannot reverse a fraction with a numerator of 0.");
         }
-        return new Fraction(denom.intValue(), num.intValue());
+        return new Fraction(denom, num);
     }
 
     /**
      * Метод, реализующий поиск наибольшего общего делителя для двух чисел.
-     * @param num1 первое число
-     * @param num2 второе число
-     * @return объект класса <code>BigDecimal</code> содержащий наибольший общий делитель двух чисел.
+     * @param a первое число
+     * @param b второе число
+     * @return наибольший общий делитель двух чисел.
      */
-    private static BigDecimal gcd(BigDecimal num1, BigDecimal num2){
-        if (Objects.equals(num1, BigDecimal.ZERO) && Objects.equals(num2, BigDecimal.ZERO)) return BigDecimal.ONE;
-        if (Objects.equals(num1, num2)) return num2;
-        if (Objects.equals(num1, BigDecimal.ZERO)) return num2;
-        if (Objects.equals(num2, BigDecimal.ZERO)) return num1;
-
-        return gcd(num1.min(num2).abs(), num1.subtract(num2).abs());
+    private static long gcd(long a, long b) {
+        if (b == 0) return Math.abs(a);
+        return gcd(b, a % b);
     }
 
-    public BigDecimal getNum() {
+
+    /**
+     * Статический метод, реализующий поиск минимальной дроби из двух.
+     * @param f1 первая дробь
+     * @param f2 вторая дробь
+     * @return объект класса <code>Fraction</code>  содержащий минимальную дробь.
+     */
+    public static Fraction min(Fraction f1, Fraction f2){
+        long newF1Num = f1.num * f2.denom;
+        long newF2Num = f2.num * f1.denom;
+        return newF1Num < newF2Num ? f1 : f2;
+    }
+
+
+    /**
+     * Метод, переводящий обычную дробь в десятичную
+     * @return результат деления числителя на знаменатель
+     */
+    public double toDecimal() {
+        return (double) this.num / this.denom;
+    }
+
+
+    /**
+     * Метод для проверки: является ли дробь больше заданной
+     * @param other значение другой дроби
+     * @return <code>true</code> если исходная дробь больше
+     *         <code>false</code> иначе
+     */
+    public boolean isMore(Fraction other) {
+        long newF1Num = this.num * other.denom;
+        long newF2Num = other.num * this.denom;
+        return newF1Num > newF2Num;
+    }
+
+    public String getFracType() {
+        return fracType;
+    }
+
+    public void setFracType(String fracType) {
+        this.fracType = fracType;
+    }
+
+    public long getNum() {
         return num;
     }
 
-    public void setNum(BigDecimal num) {
+    public void setNum(long num) {
         this.num = num;
     }
 
-    public BigDecimal getDenom() {
+    public long getDenom() {
         return denom;
     }
 
-    public void setDenom(BigDecimal denom) {
+    public void setDenom(long denom) {
         this.denom = denom;
     }
 
-    public Boolean getDouble() {
+    public boolean isDouble() {
         return isDouble;
     }
 
-    public void setDouble(Boolean aDouble) {
+    public void setDouble(boolean aDouble) {
         isDouble = aDouble;
     }
 
     @Override
-    public String toString(){
-        if (this.isDouble){
-            return String.format("%f", num.doubleValue());
+    public String toString() {
+        if (this.isDouble) {
+            return String.valueOf((double) num / denom);
         }
-        return denom.equals(BigDecimal.ONE) || num.equals(BigDecimal.ZERO) ? String.format("%d", num.intValue())
-                : num + "/" + denom;
+        return denom == 1 || num == 0 ? String.valueOf(num) : num + "/" + denom;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true; // Сравнение ссылок
-        if (obj == null || getClass() != obj.getClass()) return false; // Проверка типа
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
         Fraction other = (Fraction) obj;
-
-        // Сравнение числителя и знаменателя
-        return Objects.equals(this.num, other.num) && Objects.equals(this.denom, other.denom);
+        return this.num * other.denom == other.num * this.denom;
     }
 }

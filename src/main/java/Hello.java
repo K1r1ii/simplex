@@ -4,13 +4,15 @@ import dataStorage.Solution;
 import dataStorage.Task;
 import simplex.*;
 
-// TODO: считывание с json, добавить тип задачи (min, max), добавить тип дробей
+// TODO: добавить тип задачи (min, max), добавить тип дробей; SceneBuilder
 
 public class Hello {
     public static void main(String[] args){
-        String filePath = "test_data/test_vasya_2.txt";
+
+
+        String filePath = "test_data/test_j2.json";
         // считывание данных с файла
-        Task testTask = ReadTask.readSM(filePath);
+        Task testTask = ReadTask.readSMFromJson(filePath);
         if (testTask.getErrorMessage() != null) {
             System.out.println(testTask.getErrorMessage());
             return;
@@ -18,11 +20,14 @@ public class Hello {
 
         System.out.println("Задача:\n" + testTask);
 
-        // решение с использованием метода искусственного базиса
-        artificialBasis(testTask);
+        if (testTask.getBase() == null) {
+            // решение с использованием метода искусственного базиса
+            artificialBasis(testTask);
 
-        // решение с готовым базисом
-        classicSimplex(testTask);
+        } else {
+            // решение с готовым базисом
+            classicSimplex(testTask);
+        }
 
     }
 
@@ -32,7 +37,7 @@ public class Hello {
             System.out.println(gausTask.getErrorMassage());
             return;
         }
-        System.out.println("Гаусс:\n" + gausTask);
+        System.out.println("Гаусс:" + gausTask);
 
         // запуск автоматического режима симплекс метода для решения задачи
         Solution solution = SimplexMethod.autoMode(gausTask);
@@ -42,7 +47,7 @@ public class Hello {
         }
 
         // вывод ответа
-        System.out.println("Решение:\n" + solution);
+        System.out.println(solution);
     }
 
     public static void artificialBasis(Task curTask) {
@@ -52,7 +57,7 @@ public class Hello {
             System.out.println(test4.getErrorMassage());
             return;
         }
-        System.out.println("Результат искусственного базиса:\n" + test4);
+        System.out.println("Результат искусственного базиса:" + test4);
         Solution solution = SimplexMethod.autoMode(test4);
         if (solution.getErrorMessage() != null) {
             System.out.println(solution.getErrorMessage());

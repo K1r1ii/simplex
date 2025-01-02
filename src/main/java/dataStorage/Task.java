@@ -9,34 +9,71 @@ public class Task {
     private ArrayList<Fraction> function;
     private Matrix matrix;
     private ArrayList<Integer> base;
+    private String taskType;
+    private String fracType;
+    private String mode;
     private boolean isDecide;
     private String errorMessage;
 
+    public static String  AUTO_MODE = "auto";
+    public static String  MANUAL_MODE = "manual";
+
+
     /**
+     *
      * Конструктор для сохранения задачи со списком номеров базисных переменных
      * @param function список коэффициентов исходной функции
      * @param matrix матрица ограничений
      * @param isDecide флаг решения задачи
      * @param base список с номерами базисных переменных
+     * @param taskType тип задачи
+     * @param fracType тип дробей
+     * @param mode режим работы (ручной, автоматический)
      */
-    public Task(ArrayList<Fraction> function, Matrix matrix, boolean isDecide, ArrayList<Integer> base){
+    public Task(
+            ArrayList<Fraction> function,
+            Matrix matrix,
+            boolean isDecide,
+            ArrayList<Integer> base,
+            String taskType,
+            String fracType,
+            String mode
+    ){
         this.function = function;
         this.matrix = matrix;
         this.isDecide = isDecide;
         this.base = base;
+        this.taskType = taskType;
+        this.fracType = fracType;
+        this.mode = mode;
     }
 
+
     /**
+     *
      * Конструктор для сохранения задачи без списка номеров базисных переменных (для метода искусственного базиса)
      * @param function список коэффициентов исходной функции
      * @param matrix матрица ограничений
      * @param isDecide флаг решения задачи
+     * @param taskType тип задачи
+     * @param fracType тип дробей
+     * @param mode режим работы (ручной, автоматический)
      */
-    public Task(ArrayList<Fraction> function, Matrix matrix, boolean isDecide){
+    public Task(
+            ArrayList<Fraction> function,
+            Matrix matrix,
+            boolean isDecide,
+            String taskType,
+            String fracType,
+            String mode
+    ){
         this.function = function;
         this.matrix = matrix;
         this.isDecide = isDecide;
         this.base = null;
+        this.taskType = taskType;
+        this.fracType = fracType;
+        this.mode = mode;
     }
 
     /**
@@ -87,16 +124,43 @@ public class Task {
         this.errorMessage = errorMessage;
     }
 
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
+    }
+
+    public String getFracType() {
+        return fracType;
+    }
+
+    public void setFracType(String fracType) {
+        this.fracType = fracType;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
     @Override
     public String toString(){
-        String functionStr = "f = " + function.toString();
-        String matrixStr = "Restrictions:\n" + matrix.toString();
+        String functionStr = "\nf = " + function.toString();
+        String matrixStr = "\nRestrictions:\n" + matrix.toString();
+        String taskTypeStr = "\nTask type: " + taskType;
+        String fracTypeStr = "\nFractions type: " + fracType;
+        String modeStr = "\nMode: " + mode;
 
         if(base != null){
-            String baseStr = "Base: " + base.toString();
-            return functionStr + "\n" + matrixStr + baseStr + "\n";
+            String baseStr = "Base: " + base;
+            return functionStr + matrixStr + baseStr + taskTypeStr + fracTypeStr + matrixStr;
         } else {
-            return functionStr + "\n" + matrixStr;
+            return functionStr + matrixStr + taskTypeStr + fracTypeStr + modeStr;
         }
     }
 }

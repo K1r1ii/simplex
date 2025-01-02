@@ -2,7 +2,6 @@ package simplex;
 
 import dataStorage.*;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +16,14 @@ public class SimplexMethod {
      * @return объект класс <code>Solution</code> содержащий решение задачи: значение функции и вектор аргументов.
      */
     public static Solution autoMode(SimplexTable simplexTable){
+        // домножение на -1 целевой функции в режиме MAX
+        if (Objects.equals(simplexTable.getTaskType(), SimplexTable.MAX_TYPE)) {
+            ArrayList<Fraction> newFunction = new ArrayList<>();
+            for (int i = 0; i < simplexTable.getFunction().size(); i++) {
+                newFunction.add(Fraction.ZERO.subtract(simplexTable.getFunction().get(i)));
+            }
+            simplexTable.setFunction(newFunction);
+        }
         SimplexTable newStep = simplexStep(simplexTable, -1, -1, false);
         if(newStep.getErrorMassage() !=  null){
             return new Solution(newStep.getErrorMassage());
@@ -31,6 +38,8 @@ public class SimplexMethod {
             isDecide = newStep.isDecide();
         }
 
+        // TODO: менять дроби на выводе, если стоит режим десятичных дробей
+
         ArrayList<Fraction> solutionVector = new ArrayList<>();
         // заполнение вектора решения нулями
         for(int i = 0; i < newStep.getBase().size() + newStep.getFreeVars().size(); i++){
@@ -44,7 +53,13 @@ public class SimplexMethod {
             solutionVector.set(newStep.getBase().get(i) - 1, newStep.getMatrix()[i][colSize - 1]);
         }
 
-        Fraction functionValue = Fraction.ZERO.difference(newStep.getFunction().getLast());
+        Fraction functionValue;
+        if (Objects.equals(simplexTable.getTaskType(), SimplexTable.MAX_TYPE)) {
+            functionValue = newStep.getFunction().getLast();
+        } else {
+            functionValue = Fraction.ZERO.subtract(newStep.getFunction().getLast());
+        }
+
         return new Solution(functionValue, solutionVector);
     }
 
@@ -93,7 +108,7 @@ public class SimplexMethod {
         sRow = coords.get(0);
         sCol = coords.get(1);
         Fraction sValue = matrix[sRow][sCol]; // значение опорного элемента
-        System.out.println("sValue: " + sValue);
+        System.out.println("sValue: " + sValue + " " + sRow + " " + sCol);
 
         // замена базиса
         int curBaseNum = simplexTable.getBase().get(sRow);
@@ -103,7 +118,7 @@ public class SimplexMethod {
         newFreeV.set(sCol, curBaseNum);
 
         // обновление опорного элемента
-        newMatrix.addElementByIndex(sRow, sCol, sValue.getReverseFraction());
+        newMatrix.addElementByIndex(sRow, sCol, Fraction.ONE.divide(sValue));
 
         // обновление опорной строки
         for(int i = 0; i < newMatrix.getMatrix()[0].length; i++){
@@ -111,7 +126,7 @@ public class SimplexMethod {
             newMatrix.addElementByIndex(
                     sRow,
                     i,
-                    matrix[sRow][i].multiply(sValue.getReverseFraction())
+                    matrix[sRow][i].divide(sValue)
             );
         }
 
@@ -122,12 +137,12 @@ public class SimplexMethod {
             newMatrix.addElementByIndex(
                     i,
                     sCol,
-                    matrix[i][sCol].multiply(Fraction.ZERO.difference(sValue.getReverseFraction()))
+                    matrix[i][sCol].divide(Fraction.ZERO.subtract(sValue))
             );
         }
         Fraction oldSEl = newFunction.get(sCol); // старый элемент функции напротив опорного
         newFunction
-                .set(sCol, newFunction.get(sCol).multiply(Fraction.ZERO.difference(sValue.getReverseFraction())));
+                .set(sCol, newFunction.get(sCol).divide(Fraction.ZERO.subtract(sValue)));
 
         // обновление остальных строк + обновление функции
         for (int i = 0; i < newMatrix.getMatrix().length; i++){
@@ -136,17 +151,19 @@ public class SimplexMethod {
                     continue;
                 }
                 Fraction curEl = matrix[i][sCol]; // элемент напротив опорного
-                Fraction newEl = matrix[i][j].difference(curEl.multiply(newMatrix.getMatrix()[sRow][j]));
+                Fraction newEl = matrix[i][j].subtract(curEl.multiply(newMatrix.getMatrix()[sRow][j]));
                 newMatrix.addElementByIndex(i, j, newEl);
             }
         }
         for (int i = 0; i < newFunction.size(); i++){
             if (i == sCol) continue;
-            newFunction.set(i, newFunction.get(i).difference(oldSEl.multiply(newMatrix.getMatrix()[sRow][i])));
+            newFunction.set(i, newFunction.get(i).subtract(oldSEl.multiply(newMatrix.getMatrix()[sRow][i])));
         }
 
-        SimplexTable newTable = new SimplexTable(newFunction, newMatrix, newBase, newFreeV, false);
+        SimplexTable newTable = new SimplexTable(newFunction,newMatrix, newBase, newFreeV, false,
+                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
         if (!checkBasisValue(newTable)) {
+            System.out.println(newTable);
             return new SimplexTable("ERROR: исходный базис является ошибочным");
         }
 
@@ -187,7 +204,7 @@ public class SimplexMethod {
             // поиск ненулевого элемента
             Fraction minEl = new Fraction(0);
             for (int j = i; j < mtx.getMatrix().length; j++) {
-                if (!Objects.equals(mtx.getMatrix()[j][i].getNum(), BigDecimal.ZERO)) {
+                if (mtx.getMatrix()[j][i].getNum() != 0) {
                     minEl = mtx.getMatrix()[j][i];
                     indMinEl = j;
                     break;
@@ -195,7 +212,7 @@ public class SimplexMethod {
             }
 
             // проверка на нулевой столбец
-            if (Objects.equals(minEl.getNum(), BigDecimal.ZERO) && i + 1 < curTask.getBase().size()) {
+            if (minEl.getNum() == 0 && i + 1 < curTask.getBase().size()) {
                 return new SimplexTable("ERROR: Базисный столбец состоит из нулей.");
             }
 
@@ -212,7 +229,7 @@ public class SimplexMethod {
         for(Fraction[] row: mtx.getMatrix()){
             boolean zeroFlag = false;
             for(Fraction rowEl: row){
-                if(!Objects.equals(rowEl.getNum(), BigDecimal.ZERO)){
+                if(rowEl.getNum() != 0){
                     zeroFlag = true;
                     break;
                 }
@@ -260,7 +277,7 @@ public class SimplexMethod {
 
                     } else {
                         minusCoef = curTask.getFunction().get(i)
-                                .multiply(Fraction.ZERO.difference(mtx.getMatrix()[baseInd][j]));
+                                .multiply(Fraction.ZERO.subtract(mtx.getMatrix()[baseInd][j]));
                     }
                     newFunction.set(j, newFunction.get(j).sum(minusCoef));
                 }
@@ -269,8 +286,16 @@ public class SimplexMethod {
                 newFunction.set(i, newFunction.get(i).sum(curTask.getFunction().get(i)));
             }
         }
-        newFunction.set(newFunction.size() - 1, Fraction.ZERO.difference(newFunction.getLast()));
-        return new SimplexTable(new Task(newFunction, mtx, false, curTask.getBase()));
+        newFunction.set(newFunction.size() - 1, Fraction.ZERO.subtract(newFunction.getLast()));
+        return new SimplexTable(new Task(
+                newFunction,
+                mtx,
+                false,
+                curTask.getBase(),
+                curTask.getTaskType(),
+                curTask.getFracType(),
+                curTask.getMode()
+                ));
     }
 
     /**
@@ -295,7 +320,7 @@ public class SimplexMethod {
             for(int j = 0; j < mtx.length; j++) {
                 if (mtx[j][i].isMore(Fraction.ZERO)) {
                     minValue = mtx[j][mtx[0].length - 1]
-                            .multiply(mtx[j][i].getReverseFraction());
+                            .divide(mtx[j][i]);
                     supportCoordinates.add(j); // добавляем номер ряда
                     supportCoordinates.add(i); // добавляем номер столбца
                     break;
@@ -308,7 +333,7 @@ public class SimplexMethod {
             for(int j = 0; j < mtx.length; j++) {
                 if (mtx[j][i].isMore(Fraction.ZERO)) {
                     Fraction value = mtx[j][mtx[0].length - 1]
-                            .multiply(mtx[j][i].getReverseFraction());
+                            .divide(mtx[j][i]);
                     if (minValue.isMore(value)) {
                         minValue = value;
                         supportCoordinates.set(0, j); // добавляем номер ряда
@@ -335,12 +360,12 @@ public class SimplexMethod {
         int lastIndex = matrix.length - 1;
 
         Fraction curBestRelation = matrix[supportRow][lastIndex]
-                .multiply(matrix[supportRow][supportColumn].getReverseFraction());
+                .divide(matrix[supportRow][supportColumn]);
 
         // проверка на минимальность отношения свободного члена к опорному элементу в текущем столбце
         for (Fraction[] row : matrix) {
             Fraction curRelation = row[lastIndex]
-                    .multiply(row[supportColumn].getReverseFraction());
+                    .divide(row[supportColumn]);
             curBestRelation = Fraction.min(curBestRelation, curRelation);
         }
         if (curBestRelation != matrix[supportRow][supportColumn]) {

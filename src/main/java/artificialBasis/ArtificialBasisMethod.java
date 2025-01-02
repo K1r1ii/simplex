@@ -44,7 +44,7 @@ public class ArtificialBasisMethod {
             for (Fraction[] fractions : newMatrix.getMatrix()) {
                 curSum = curSum.sum(fractions[i]);
             }
-            newFunction.add(Fraction.ZERO.difference(curSum));
+            newFunction.add(Fraction.ZERO.subtract(curSum));
         }
 
         // список номеров базисных переменных
@@ -57,7 +57,8 @@ public class ArtificialBasisMethod {
             newFreeVars.add(i);
         }
 
-        return new SimplexTable(newFunction, newMatrix, newBase, newFreeVars, false);
+        return new SimplexTable(newFunction, newMatrix, newBase, newFreeVars, false,
+                curTask.getTaskType(), curTask.getFracType(), curTask.getMode());
     }
 
     /**
@@ -67,6 +68,7 @@ public class ArtificialBasisMethod {
      */
     public static SimplexTable autoMode(Task curTask) {
         SimplexTable simplexTable = createSimplexTable(curTask); // переход к симплекс-таблице
+        System.out.println(simplexTable);
         boolean isDecide = simplexTable.isDecide();
          while (!isDecide) {
              simplexTable = artificialBasisStep(simplexTable, -1, -1, curTask.getFunction());
@@ -124,7 +126,8 @@ public class ArtificialBasisMethod {
                 }
                 ArrayList<Fraction> newFunction = expressionFunction(simplexTable, originalFunction); // выражение функции через новый базис
                 Matrix mtx = new Matrix(simplexTable.getMatrix());
-                return new SimplexTable(newFunction, mtx, simplexTable.getBase(), simplexTable.getFreeVars(), true);
+                return new SimplexTable(newFunction, mtx, simplexTable.getBase(), simplexTable.getFreeVars(),
+                        true, simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
             } else {
                 // вызываем холостой шаг симплекс-метода
                 return SimplexMethod
@@ -173,7 +176,7 @@ public class ArtificialBasisMethod {
         // суммирование все переменные из базиса
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
-                newFunction.set(j, newFunction.get(j).sum(Fraction.ZERO.difference(matrix[i][j])
+                newFunction.set(j, newFunction.get(j).sum(Fraction.ZERO.subtract(matrix[i][j])
                         .multiply(originalFunction.get(curBase.get(i) - 1))));
             }
         }
@@ -215,6 +218,7 @@ public class ArtificialBasisMethod {
         ArrayList<Integer> newFreeVars = new ArrayList<>();
 
         // заполнение новой матрицы
+        System.out.println(additionalVars);
         for (int i = 0; i < matrix.length; i++) {
             int countAdditional = 0;
             for (int j = 0; j < matrix[0].length; j++) {
@@ -240,7 +244,8 @@ public class ArtificialBasisMethod {
             }
         }
 
-        return new SimplexTable(newFunction, newMatrix, simplexTable.getBase(), newFreeVars, simplexTable.isDecide());
+        return new SimplexTable(newFunction, newMatrix, simplexTable.getBase(), newFreeVars, simplexTable.isDecide(),
+                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
     }
 
     /**
@@ -252,7 +257,7 @@ public class ArtificialBasisMethod {
     private static boolean checkNullFunction(ArrayList<Fraction> function) {
         for (Fraction i : function) {
             if (!i.equals(Fraction.ZERO)) {
-
+                System.out.println(i.getNum());
                 return false;
             }
         }
@@ -305,7 +310,7 @@ public class ArtificialBasisMethod {
             }
         }
 
-        return new SimplexTable(simplexTable.getFunction(),
-                newMatrix, newBase, simplexTable.getFreeVars(), simplexTable.isDecide());
+        return new SimplexTable(simplexTable.getFunction(), newMatrix, newBase, simplexTable.getFreeVars(),
+                simplexTable.isDecide(), simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
     }
 }

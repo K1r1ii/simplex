@@ -54,7 +54,7 @@ public class Solution {
 
     @Override
     public String toString(){
-        return "f = " + functionValue.toString() + "\n" + "x = " + vectorSolution.toString();
+        return "\nРешение:\nf = " + functionValue.toString() + "\n" + "x = " + vectorSolution.toString();
     }
 }
 
