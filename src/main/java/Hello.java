@@ -10,7 +10,7 @@ public class Hello {
     public static void main(String[] args){
 
 
-        String filePath = "test_data/test_j2.json";
+        String filePath = "test_data/test_j1.json";
         // считывание данных с файла
         Task testTask = ReadTask.readSMFromJson(filePath);
         if (testTask.getErrorMessage() != null) {

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<TabPane fx:id="tabPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="626.0" prefWidth="813.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.Controller">
+    <Tab closable="false" text="Задача">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="458.0" prefWidth="699.0">
+            <!-- VBox с полями ввода -->
+            <VBox alignment="TOP_CENTER" prefHeight="516.0" prefWidth="187.0">
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="39.0" prefWidth="182.0" text="Выберите вид базиса" wrapText="true">
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <VBox.margin>
+                  <Insets left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+            <ComboBox fx:id="comboBasis" prefWidth="150.0" value="искусственный">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="искусственный" />
+                        <String fx:value="готовый" />
+                    </FXCollections>
+                </items>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" />
+               </VBox.margin>
+            </ComboBox>
+                <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="39.0" prefWidth="182.0" text="Количество переменных" wrapText="true">
+                    <opaqueInsets>
+                        <Insets />
+                    </opaqueInsets>
+                    <VBox.margin>
+                        <Insets bottom="2.0" left="5.0" right="5.0" top="5.0" />
+                    </VBox.margin>
+                </Label>
+                <TextField fx:id="numVars" promptText="Введите число">
+                    <opaqueInsets>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                    </opaqueInsets>
+                    <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="2.0" />
+                    </VBox.margin>
+                </TextField>
+                <Label alignment="CENTER" prefHeight="39.0" prefWidth="182.0" text="Количество ограничений" wrapText="true">
+                    <opaqueInsets>
+                        <Insets />
+                    </opaqueInsets>
+                    <VBox.margin>
+                        <Insets bottom="2.0" left="5.0" right="5.0" top="5.0" />
+                    </VBox.margin>
+                </Label>
+                <TextField fx:id="numRestrictions" promptText="Введите число">
+                    <opaqueInsets>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                    </opaqueInsets>
+                    <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="2.0" />
+                    </VBox.margin>
+                </TextField>
+            <Label alignment="CENTER" prefHeight="39.0" prefWidth="182.0" text="Выберите тип задачи" wrapText="true">
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </Label>
+            <ComboBox fx:id="comboTask" prefWidth="150.0" value="min" visibleRowCount="2">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="min" />
+                        <String fx:value="max" />
+                    </FXCollections>
+                </items>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </ComboBox>
+                <Button alignment="CENTER" mnemonicParsing="false" onAction="#handleCreateFields" prefHeight="26.0" prefWidth="132.0" text="Применить">
+                    <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="20.0" />
+                    </VBox.margin>
+                </Button>
+            </VBox>
+
+            <!-- ScrollPane для отображения обеих сеток (gridPaneFunction и gridPaneMatrix) -->
+            <ScrollPane accessibleRole="IMAGE_VIEW" layoutX="190.0" layoutY="14.0" prefHeight="319.0" prefWidth="623.0" AnchorPane.bottomAnchor="262.0" AnchorPane.leftAnchor="190.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="14.0">
+                <VBox>
+                    <!-- GridPane для отображения функции (сначала будет gridPaneFunction) -->
+                    <GridPane fx:id="gridPaneFunction" alignment="CENTER" prefHeight="80">
+
+                    </GridPane>
+
+                    <!-- GridPane для отображения матрицы -->
+                    <GridPane fx:id="gridPaneMatrix" alignment="CENTER">
+
+                    </GridPane>
+                </VBox>
+            <padding>
+               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+            </padding>
+            </ScrollPane>
+            <HBox alignment="CENTER" layoutX="190.0" layoutY="333.0" prefHeight="259.0" prefWidth="622.0">
+                <VBox alignment="CENTER" prefHeight="198.0" prefWidth="181.0">
+                    <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="39.0" prefWidth="182.0" text="Выберите режим" wrapText="true">
+                        <VBox.margin>
+                            <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </Label>
+                    <ComboBox fx:id="comboMode" prefWidth="150.0" value="авто">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="авто" />
+                                <String fx:value="пошаговый" />
+                            </FXCollections>
+                        </items>
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                        </VBox.margin>
+                    </ComboBox>
+                    <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="39.0" prefWidth="182.0" text="Выберите тип дробей" wrapText="true">
+                        <VBox.margin>
+                            <Insets bottom="5.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </Label>
+                    <ComboBox fx:id="comboFrac" prefWidth="150.0" value="обычные">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="обычные" />
+                                <String fx:value="десятичные" />
+                            </FXCollections>
+                        </items>
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
+                        </VBox.margin>
+                    </ComboBox>
+                </VBox>
+                <VBox fx:id="vBoxBasisVars" alignment="CENTER" prefHeight="198.0" prefWidth="181.0" spacing="10" />
+                <VBox alignment="CENTER" prefHeight="198.0" prefWidth="181.0">
+                    <Button fx:id="simplexButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#handleSimplexMethod" prefHeight="26.0" prefWidth="135.0" text="симплекс метод" wrapText="true">
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </Button>
+                    <Button fx:id="artificialBasisButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#handleArtificialBasisMethod" prefHeight="26.0" prefWidth="132.0" text="искусственный базис">
+                        <VBox.margin>
+                            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                        </VBox.margin>
+                    </Button>
+                </VBox>
+            </HBox>
+
+        </AnchorPane>
+    </Tab>
+<!-- вкладка для симплекс метода -->
+    <Tab fx:id="simplexTab" closable="false" text="симплекс метод">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+            <VBox alignment="TOP_CENTER" prefHeight="516.0" prefWidth="187.0" spacing="10.0">
+                <HBox fx:id="taskTypeHBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                    <Label alignment="CENTER" prefHeight="29.0" prefWidth="91.0" text="Тип задачи" />
+                </HBox>
+                <HBox fx:id="fracTypeHBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                    <Label alignment="CENTER" prefHeight="29.0" prefWidth="91.0" text="Тип дробей" />
+                </HBox>
+                <HBox fx:id="modeHBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                    <Label alignment="CENTER" prefHeight="29.0" prefWidth="91.0" text="Режим" />
+                </HBox>
+                <HBox fx:id="basisHBox" alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                    <Label alignment="CENTER" prefHeight="29.0" prefWidth="91.0" text="Базис" />
+                </HBox>
+            <VBox fx:id="buttonsSMVBox" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="10.0" />
+            </VBox>
+            <ScrollPane accessibleRole="IMAGE_VIEW" layoutX="190.0" layoutY="14.0" prefHeight="319.0" prefWidth="623.0" AnchorPane.bottomAnchor="262.0" AnchorPane.leftAnchor="190.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="14.0">
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                </padding>
+                <VBox>
+                    <GridPane fx:id="gridPaneFunctionSM" alignment="CENTER" />
+                    <GridPane fx:id="gridPaneMatrixSM" alignment="CENTER" />
+                </VBox>
+            </ScrollPane>
+            <ScrollPane layoutX="190.0" layoutY="333.0" prefHeight="268.0" prefWidth="625.0">
+                <VBox>
+                    <GridPane fx:id="xSolutionSMGridPane">
+                    </GridPane>
+                    <GridPane fx:id="ySolutionSMGridPane">
+                    </GridPane>
+                </VBox>
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                </padding>
+            </ScrollPane>
+        </AnchorPane>
+    </Tab>
+<!--    вкладка для метода ИБ -->
+    <Tab fx:id="artificialBasisTab" closable="false" text="метод искусственного базиса">
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+    </Tab>
+</TabPane>

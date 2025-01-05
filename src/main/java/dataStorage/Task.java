@@ -158,7 +158,7 @@ public class Task {
 
         if(base != null){
             String baseStr = "Base: " + base;
-            return functionStr + matrixStr + baseStr + taskTypeStr + fracTypeStr + matrixStr;
+            return functionStr + matrixStr + baseStr + taskTypeStr + fracTypeStr + modeStr + matrixStr;
         } else {
             return functionStr + matrixStr + taskTypeStr + fracTypeStr + modeStr;
         }
