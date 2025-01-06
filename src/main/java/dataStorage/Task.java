@@ -1,6 +1,9 @@
 package dataStorage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Класс для хранения исходной задачи
@@ -146,6 +149,52 @@ public class Task {
 
     public void setMode(String mode) {
         this.mode = mode;
+    }
+
+
+    /**
+     * Метод для конвертации объекта в словарь.
+     * @return словарь со значениями всех полей класса.
+     */
+    public Map<String, Object> toMap() {
+        Map<String, Object> taskMap = new HashMap<>();
+
+        // конвертация коэффициентов функции
+        ArrayList<String> functionStr = new ArrayList<>();
+        for (Fraction i : function) {
+            if (Objects.equals(fracType, Fraction.DECIMAL)) {
+                functionStr.add(i.toDecimal());
+            } else {
+                functionStr.add(i.toString());
+            }
+        }
+
+        // конвертация коэффициентов матрицы
+        Fraction[][] mtx = matrix.getMatrix();
+        int rows = mtx.length;
+        int columns = mtx[0].length;
+
+        String[][] matrixStr = new String[rows][columns];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                if (Objects.equals(fracType, Fraction.DECIMAL)) {
+                    matrixStr[i][j] = String.valueOf(mtx[i][j].toDecimal());
+                } else {
+                    matrixStr[i][j] = mtx[i][j].toString();
+                }
+            }
+        }
+
+        taskMap.put("countVars", function.size());
+        taskMap.put("countRestrictions", matrix.getMatrix().length);
+        taskMap.put("taskType", taskType);
+        taskMap.put("fracType", fracType);
+        taskMap.put("base", base);
+        taskMap.put("mode", mode);
+        taskMap.put("function", functionStr);
+        taskMap.put("restrictions", matrixStr);
+
+        return taskMap;
     }
 
     @Override

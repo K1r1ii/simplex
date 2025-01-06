@@ -62,21 +62,21 @@ public class ArtificialBasisMethod {
     }
 
     /**
+     *
      * Метод, реализующий автоматический режим выполнения метода искусственного базиса.
-     * @param curTask объект класса <code>Task</code>, содержащий текущую задачу.
+     * @param simplexTable объект класса <code>SimplexTable</code>, содержащий текущую симплекс-таблицу.
+     * @param function список коэффициентов исходной функции.
      * @return объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу готовую к использованию в основном алгоритме
      */
-    public static SimplexTable autoMode(Task curTask) {
-        SimplexTable simplexTable = createSimplexTable(curTask); // переход к симплекс-таблице
-        System.out.println(simplexTable);
+    public static SimplexTable autoMode(SimplexTable simplexTable, ArrayList<Fraction> function) {
+
         boolean isDecide = simplexTable.isDecide();
          while (!isDecide) {
-             simplexTable = artificialBasisStep(simplexTable, -1, -1, curTask.getFunction());
+             simplexTable = artificialBasisStep(simplexTable, -1, -1, function);
              if (simplexTable.getErrorMassage() != null) {
                  break;
              }
              isDecide = simplexTable.isDecide();
-             System.out.println(simplexTable);
          }
          return simplexTable;
     }

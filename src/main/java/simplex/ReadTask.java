@@ -2,6 +2,7 @@ package simplex;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import dataStorage.Fraction;
 import dataStorage.Matrix;
 import dataStorage.Task;
@@ -9,6 +10,7 @@ import dataStorage.Task;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -17,11 +19,10 @@ import java.util.Objects;
 public class ReadTask {
     /**
      * Метод, реализующий считывание задачи с файла json.
-     * @param filePath путь к файлу.
+     * @param jsonFile файл формата json.
      * @return объект класса <code>Task</code>, содержащий данные о задаче.
      */
-    public static Task readSMFromJson(String filePath) {
-        File jsonFile = new File(filePath);  // Путь к json
+    public static Task readSMFromJson(File jsonFile) {
 
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -30,7 +31,7 @@ public class ReadTask {
             int countVars = rootNode.path("countVars").asInt(); // кол-во переменных
             int countRestrictions = rootNode.path("countRestrictions").asInt(); // кол-во ограничений
             String taskType = rootNode.path("taskType").asText(); // тип задачи
-            String fracType = rootNode.path("fracType").asText(); // тип дробейfunction
+            String fracType = rootNode.path("fracType").asText(); // тип дробей function
             String mode = rootNode.path("mode").asText(); // способ решения (ручной или авто)
 
 
@@ -90,5 +91,13 @@ public class ReadTask {
         } catch (IOException e) {
             return new Task("ERROR: Некорректные данные. " + e);
         }
+    }
+
+    public static void saveSMasJson(Task task, File jsonFile) throws IOException {
+        // Настройка ObjectMapper для сериализации
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, Object> taskMap = task.toMap();
+        mapper.writeValue(jsonFile, taskMap);
     }
 }

@@ -1,6 +1,9 @@
 package dataStorage;
 
+import java.awt.font.FontRenderContext;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -113,6 +116,46 @@ public class SimplexTable {
         return function;
     }
 
+    /**
+     * Метод возвращающий коэффициенты в виде строки в зависимости от выбранного типа дробей.
+     * @return ArrayList<String> - список коэффициентов функции.
+     */
+    public ArrayList<String> getFunctionStr() {
+        ArrayList<String> functionStr = new ArrayList<>();
+
+        if (Objects.equals(fracType, Fraction.DECIMAL)) {
+            for (Fraction i : function) {
+                functionStr.add(i.toDecimal());
+            }
+        } else {
+            for (Fraction i : function) {
+                functionStr.add(i.toString());
+            }
+        }
+        return  functionStr;
+    }
+
+    /**
+     * Метод возвращающий ограничения в виде строки в зависимости от выбранного типа дробей.
+     * @return String[][] - двумерный массив строк.
+     */
+    public String[][] getMatrixStr() {
+        Fraction[][] mtx = matrix.getMatrix();
+        int rows = mtx.length;
+        int columns = mtx[0].length;
+        String[][] matrixStr = new String[rows][columns];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                if (Objects.equals(fracType, Fraction.DECIMAL)) {
+                    matrixStr[i][j] = mtx[i][j].toDecimal();
+                } else {
+                    matrixStr[i][j] = mtx[i][j].toString();
+                }
+            }
+        }
+        return matrixStr;
+    }
+
     public void setFunction(ArrayList<Fraction> function) {
         this.function = function;
     }
@@ -180,6 +223,26 @@ public class SimplexTable {
     public void setMode(String mode) {
         this.mode = mode;
     }
+
+
+    /**
+     * Метод для конвертации объекта в словарь.
+     * @return словарь со значениями всех полей класса.
+     */
+    public Map<String, Object> toMap() {
+        Map<String, Object> taskMap = new HashMap<>();
+
+        taskMap.put("taskType", taskType);
+        taskMap.put("fracType", fracType);
+        taskMap.put("base", base);
+        taskMap.put("freeVars", freeVars);
+        taskMap.put("mode", mode);
+        taskMap.put("function", getFunctionStr());
+        taskMap.put("restrictions", getMatrixStr());
+
+        return taskMap;
+    }
+
 
     @Override
     public String toString(){

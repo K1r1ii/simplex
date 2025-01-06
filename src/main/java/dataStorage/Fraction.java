@@ -219,10 +219,11 @@ public class Fraction {
 
     /**
      * Метод, переводящий обычную дробь в десятичную
+     *
      * @return результат деления числителя на знаменатель
      */
-    public double toDecimal() {
-        return (double) this.num / this.denom;
+    public String toDecimal() {
+        return String.valueOf((double) this.num / this.denom);
     }
 
 

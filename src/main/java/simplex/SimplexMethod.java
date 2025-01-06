@@ -38,8 +38,6 @@ public class SimplexMethod {
             isDecide = newStep.isDecide();
         }
 
-        // TODO: менять дроби на выводе, если стоит режим десятичных дробей
-
         ArrayList<Fraction> solutionVector = new ArrayList<>();
         // заполнение вектора решения нулями
         for(int i = 0; i < newStep.getBase().size() + newStep.getFreeVars().size(); i++){
@@ -60,7 +58,7 @@ public class SimplexMethod {
             functionValue = Fraction.ZERO.subtract(newStep.getFunction().getLast());
         }
 
-        return new Solution(functionValue, solutionVector);
+        return new Solution(functionValue, solutionVector, simplexTable.getFracType());
     }
 
     /**
