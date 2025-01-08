@@ -90,6 +90,29 @@ public class Matrix {
         }
     }
 
+
+    /**
+     * Метод для удаления заданной строки из матрицы
+     * @param indRow индекс заданной строки
+     */
+    public void deleteRow(int indRow) {
+        int rows = getMatrix().length;
+        int columns = getMatrix()[0].length;
+        int temp = 0;
+
+        Matrix newMatrix = new Matrix(rows - 1, columns);
+        for(int i = 0; i < rows; i++){
+            if (i == indRow) {
+                temp++;
+                continue;
+            }
+            for(int j = 0; j < columns; j++){
+                newMatrix.addElementByIndex(i+temp, j, getMatrix()[i][j]);
+            }
+        }
+        setMatrix(newMatrix.getMatrix());
+    }
+
     /**
      * Метод, реализующий вывод матрицы в консоль
      * @param msg сообщение, которое будет выведено перед матрицей

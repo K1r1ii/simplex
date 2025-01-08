@@ -69,7 +69,7 @@ public class SimplexMethod {
      * @return объект класса <code>SimplexTable</code>, содержащий новую симплекс-таблицу с новой базисной переменной.
      */
     public static SimplexTable simplexStep(SimplexTable simplexTable, int supportRow, int supportColumn,
-                                           boolean artBasisMode){
+                                           boolean freeStep){
         int sRow, sCol;
 
         ArrayList<Fraction> newFunction = simplexTable.getFunction(); // список, в котором будут новые коэффициенты функции
@@ -85,17 +85,16 @@ public class SimplexMethod {
         if (supportRow == -1 || supportColumn == -1){
             coords = findSupport(simplexTable);
         } else {
-
-            if (!artBasisMode && !checkSupport(simplexTable, supportRow, supportColumn)){
+            if (!freeStep && !checkSupport(simplexTable, supportRow, supportColumn)){
                 // опорный элемент не подходит
-                return new SimplexTable("ERROR: неверный опорный элемент.");
+                return new SimplexTable("Неверный опорный элемент.");
             }
             coords = new ArrayList<>(List.of(supportRow, supportColumn));
         }
 
         if (coords == null){
             // оптимального решения нет (функция неограниченна снизу)
-            return new SimplexTable("NOTICE: There is no optimal solution.");
+            return new SimplexTable("Функция не ограничена - оптимального решения нет.");
         }
         if (coords.equals(List.of(-1, -1))){
             // задача решена
@@ -106,7 +105,6 @@ public class SimplexMethod {
         sRow = coords.get(0);
         sCol = coords.get(1);
         Fraction sValue = matrix[sRow][sCol]; // значение опорного элемента
-        System.out.println("sValue: " + sValue + " " + sRow + " " + sCol);
 
         // замена базиса
         int curBaseNum = simplexTable.getBase().get(sRow);
@@ -161,10 +159,16 @@ public class SimplexMethod {
         SimplexTable newTable = new SimplexTable(newFunction,newMatrix, newBase, newFreeV, false,
                 simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
         if (!checkBasisValue(newTable)) {
-            System.out.println(newTable);
-            return new SimplexTable("ERROR: исходный базис является ошибочным");
+            return new SimplexTable("Исходный базис является ошибочным");
         }
+        // проверка на решенную задачу
+        coords = findSupport(newTable);
 
+        if (coords != null && coords.equals(List.of(-1, -1))){
+            // задача решена
+            newTable.setDecide(true);
+            return newTable;
+        }
         return newTable;
     }
 
@@ -200,7 +204,7 @@ public class SimplexMethod {
             int indMinEl = i;
 
             // поиск ненулевого элемента
-            Fraction minEl = new Fraction(0);
+            Fraction minEl = Fraction.ZERO;
             for (int j = i; j < mtx.getMatrix().length; j++) {
                 if (mtx.getMatrix()[j][i].getNum() != 0) {
                     minEl = mtx.getMatrix()[j][i];
@@ -210,7 +214,7 @@ public class SimplexMethod {
             }
 
             // проверка на нулевой столбец
-            if (minEl.getNum() == 0 && i + 1 < curTask.getBase().size()) {
+            if (minEl.getNum() == 0 && i + 1 < curTask.getBase().size() && minEl.equals(Fraction.ZERO)) {
                 return new SimplexTable("ERROR: Базисный столбец состоит из нулей.");
             }
 
@@ -222,18 +226,18 @@ public class SimplexMethod {
         }
 
 
-        // проверка базиса
+        // проверка ранга базиса
         int rang = 0;
-        for(Fraction[] row: mtx.getMatrix()){
+        for (int i = 0; i < mtx.getMatrix().length; i++) {
             boolean zeroFlag = false;
-            for(Fraction rowEl: row){
-                if(rowEl.getNum() != 0){
+            for (int j = 0; j < mtx.getMatrix()[0].length - 1; j++) {
+                if (mtx.getMatrix()[i][j].getNum() != 0) {
                     zeroFlag = true;
                     break;
                 }
             }
-            if (zeroFlag){
-                rang += 1;
+            if (zeroFlag) {
+                rang++;
             }
         }
 
@@ -255,6 +259,30 @@ public class SimplexMethod {
         for(int i = curTask.getBase().size() - 1; i >= 0 ; i--){
             mtx.replaceColumns(curTask.getBase().get(i) - 1, i);
         }
+
+        // поиск нулевых строк
+        ArrayList<Integer> nullRows = new ArrayList<>();
+        for (int i = 0; i < mtx.getMatrix().length; i++) {
+            boolean zeroFlag = true;
+            for (int j = 0; j < mtx.getMatrix()[0].length; j++) {
+                if (!mtx.getMatrix()[i][j].equals(Fraction.ZERO)) {
+                    zeroFlag = false;
+                }
+            }
+            if (zeroFlag) {
+                nullRows.add(i);
+            }
+        }
+
+        // удаление нулевых строк
+        for (int i : nullRows) {
+            mtx.deleteRow(i);
+        }
+
+        if (mtx.getMatrix().length > curTask.getFunction().size()) {
+            return new SimplexTable("Некорректная система ограничений");
+        }
+
         // список для измененной функции заполненный 0
         ArrayList<Fraction> newFunction = new ArrayList<>();
         for(int i = 0; i <= curTask.getFunction().size(); i++){
@@ -284,6 +312,7 @@ public class SimplexMethod {
                 newFunction.set(i, newFunction.get(i).sum(curTask.getFunction().get(i)));
             }
         }
+
         newFunction.set(newFunction.size() - 1, Fraction.ZERO.subtract(newFunction.getLast()));
         return new SimplexTable(new Task(
                 newFunction,
@@ -345,6 +374,30 @@ public class SimplexMethod {
         return isDecided ? new ArrayList<>(List.of(-1, -1)) : (!supportCoordinates.isEmpty() ? supportCoordinates : null);
     }
 
+
+    /**
+     * Метод возвращающий все опорные элементы для текущей таблицы
+     * @param simplexTable текущая симплекс таблица
+     * @return ArrayList<ArrayList<Integer>> - список координат всех опорных элементов
+     */
+    public static ArrayList<ArrayList<Integer>> findAllSupports(SimplexTable simplexTable) {
+        ArrayList<ArrayList<Integer>> supports = new ArrayList<>(); // список с координатами всех опорных элементов
+
+        Fraction[][] mtx = simplexTable.getMatrix();
+        for (int i = 0; i < mtx.length; i++) {
+            for (int j = 0; j < mtx[0].length - 1; j++) {
+                ArrayList<Integer> coord = new ArrayList<>(); // список с координатами
+                if (checkSupport(simplexTable, i, j)) {
+                    coord.add(i);
+                    coord.add(j);
+                    supports.add(coord);
+                }
+            }
+        }
+        return supports;
+    }
+
+
     /**
      * Метод для проверки выбранного опорного элемента.
      * @param simplexTable объект, содержащий текущую симплекс таблицу.
@@ -353,26 +406,33 @@ public class SimplexMethod {
      * @return <code>true</code> если опорный элемент подходит
      *         <code>false</code> если опорный элемент не подходит
      */
-    private static boolean checkSupport(SimplexTable simplexTable, int supportRow, int supportColumn){
+    public static boolean checkSupport(SimplexTable simplexTable, int supportRow, int supportColumn){
         Fraction[][] matrix = simplexTable.getMatrix();
-        int lastIndex = matrix.length - 1;
+        int lastIndex = matrix[0].length - 1;
+
+        // коэффициент функции > 0
+        if (simplexTable.getFunction().get(supportColumn).isMore(Fraction.ZERO)) {
+            return false;
+        }
+
+        // неположительный коэффициент ограничения
+        if (!matrix[supportRow][supportColumn].isMore(Fraction.ZERO)) {
+            return false;
+        }
 
         Fraction curBestRelation = matrix[supportRow][lastIndex]
                 .divide(matrix[supportRow][supportColumn]);
 
         // проверка на минимальность отношения свободного члена к опорному элементу в текущем столбце
         for (Fraction[] row : matrix) {
-            Fraction curRelation = row[lastIndex]
-                    .divide(row[supportColumn]);
-            curBestRelation = Fraction.min(curBestRelation, curRelation);
-        }
-        if (curBestRelation != matrix[supportRow][supportColumn]) {
-            return false;
+            if (row[supportColumn].isMore(Fraction.ZERO)) {
+                Fraction curRelation = row[lastIndex]
+                        .divide(row[supportColumn]);
+                curBestRelation = Fraction.min(curBestRelation, curRelation);
+            }
         }
 
-        // проверка на отрицательность коэффициента функции и положительность опорного элемента
-        return !simplexTable.getFunction().get(supportColumn).isMore(Fraction.ZERO)
-                && simplexTable.getMatrix()[supportRow][supportColumn].isMore(Fraction.ZERO);
+        return curBestRelation.equals(matrix[supportRow][lastIndex].divide(matrix[supportRow][supportColumn]));
     }
 
     /**

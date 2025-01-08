@@ -102,41 +102,32 @@ public class ArtificialBasisMethod {
         // удаление нулевых строк
         simplexTable = deleteNullString(simplexTable);
 
-        // проверка не отрицательности коэффициентов функции
-        boolean positiveFlag = true;
-        ArrayList<Fraction> function = simplexTable.getFunction();
+        // вызываем шаг симплекс-метода
+        SimplexTable newTable = SimplexMethod.simplexStep(simplexTable, supportRow, supportColumn, false);
 
-        // поиск отрицательных коэффициентов функции
-        for (int i = 0; i < function.size() - 1; i++) {
-            if (!function.get(i).isMore(Fraction.ZERO) && !function.get(i).equals(Fraction.ZERO)) {
-                positiveFlag = false;
-                break;
-            }
-        }
+        // удаление столбцов с выведенной дополнительной переменной
+        newTable = deleteAdditionalColumn(newTable, originalFunction);
+        // удаление нулевых строк
+        newTable = deleteNullString(newTable);
 
-        if (positiveFlag) {
-
-            // реализация холостых шагов для вывода дополнительных переменных из базиса
-            int additionalVarNum = checkAdditionalVarInBasis(simplexTable, originalFunction);
-            if (additionalVarNum == -1) {
-
-                // холостой ход не нужен
-                if (!checkNullFunction(function)) {
-                    return new SimplexTable("ERROR: Функция не занулилась!");
+        if (newTable.isDecide()) {
+            int additionalVarNum = checkAdditionalVarInBasis(newTable, originalFunction);
+            while (additionalVarNum != -1) {
+                newTable = freeStep(newTable, additionalVarNum);
+                if (newTable.getErrorMassage() != null) {
+                    return newTable;
                 }
-                ArrayList<Fraction> newFunction = expressionFunction(simplexTable, originalFunction); // выражение функции через новый базис
-                Matrix mtx = new Matrix(simplexTable.getMatrix());
-                return new SimplexTable(newFunction, mtx, simplexTable.getBase(), simplexTable.getFreeVars(),
-                        true, simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
-            } else {
-                // вызываем холостой шаг симплекс-метода
-                return SimplexMethod
-                        .simplexStep(simplexTable, simplexTable.getBase().indexOf(additionalVarNum), 0, true);
+                additionalVarNum = checkAdditionalVarInBasis(simplexTable, originalFunction);
             }
-        } else {
-            // вызываем шаг симплекс-метода
-            return SimplexMethod.simplexStep(simplexTable, supportRow, supportColumn, false);
+            // если доп переменных не осталось
+            if(!checkNullFunction(newTable.getFunction())){
+                return new SimplexTable("Функция не занулилась!");
+            }
+            ArrayList<Fraction> newFunction = expressionFunction(newTable, originalFunction);
+            newTable.setFunction(newFunction);
+            return newTable;
         }
+        return newTable;
     }
 
     /**
@@ -218,7 +209,6 @@ public class ArtificialBasisMethod {
         ArrayList<Integer> newFreeVars = new ArrayList<>();
 
         // заполнение новой матрицы
-        System.out.println(additionalVars);
         for (int i = 0; i < matrix.length; i++) {
             int countAdditional = 0;
             for (int j = 0; j < matrix[0].length; j++) {
@@ -257,7 +247,6 @@ public class ArtificialBasisMethod {
     private static boolean checkNullFunction(ArrayList<Fraction> function) {
         for (Fraction i : function) {
             if (!i.equals(Fraction.ZERO)) {
-                System.out.println(i.getNum());
                 return false;
             }
         }
@@ -312,5 +301,25 @@ public class ArtificialBasisMethod {
 
         return new SimplexTable(simplexTable.getFunction(), newMatrix, newBase, simplexTable.getFreeVars(),
                 simplexTable.isDecide(), simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
+    }
+
+    private static SimplexTable freeStep(SimplexTable simplexTable, int additionalVarNum) {
+        // метод, реализующий холостой ход симплекс таблицы
+        Fraction[][] mtx = simplexTable.getMatrix();
+        int addVarRowInd = simplexTable.getBase().indexOf(additionalVarNum);
+        int addVarColInd = -1;
+        for (int i = 0; i < mtx[addVarRowInd].length - 1; i++) {
+            if (mtx[addVarRowInd][i].getNum() != 0) {
+                addVarColInd = i;
+                break;
+            }
+        }
+        if (addVarColInd == -1) {
+            return new SimplexTable("Появилась нулевая строка с дополнительной переменной!");
+        }
+
+        simplexTable = SimplexMethod
+                .simplexStep(simplexTable, addVarRowInd, addVarColInd, true);
+        return simplexTable;
     }
 }

@@ -8,8 +8,7 @@ import java.util.Objects;
 public class Fraction {
     private long num;
     private long denom;
-    private boolean isDouble;
-    private String fracType;
+    private final String fracType;
 
     public static final Fraction ZERO = new Fraction(0);
     public static final Fraction ONE = new Fraction(1);
@@ -33,7 +32,6 @@ public class Fraction {
             this.num = num;
             this.denom = denom;
         }
-        isDouble = false;
         fracType = ORDINARY;
     }
 
@@ -44,7 +42,6 @@ public class Fraction {
     public Fraction(long num) {
         this.num = num;
         this.denom = 1;
-        isDouble = false;
         fracType = INTEGER;
     }
 
@@ -59,7 +56,6 @@ public class Fraction {
 
         this.num = (long) (num * denom);
         this.denom = denom;
-        isDouble = true;
         fracType = DECIMAL;
         reducing();
     }
@@ -243,46 +239,22 @@ public class Fraction {
         return fracType;
     }
 
-    public void setFracType(String fracType) {
-        this.fracType = fracType;
-    }
-
     public long getNum() {
         return num;
     }
 
-    public void setNum(long num) {
-        this.num = num;
-    }
-
-    public long getDenom() {
-        return denom;
-    }
-
-    public void setDenom(long denom) {
-        this.denom = denom;
-    }
-
-    public boolean isDouble() {
-        return isDouble;
-    }
-
-    public void setDouble(boolean aDouble) {
-        isDouble = aDouble;
-    }
 
     @Override
     public String toString() {
-        if (this.isDouble) {
-            return String.valueOf((double) num / denom);
-        }
         return denom == 1 || num == 0 ? String.valueOf(num) : num + "/" + denom;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
 
         Fraction other = (Fraction) obj;
         return this.num * other.denom == other.num * this.denom;

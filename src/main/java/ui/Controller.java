@@ -2,11 +2,13 @@ package ui;
 
 import artificialBasis.ArtificialBasisMethod;
 import dataStorage.*;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -15,8 +17,7 @@ import simplex.SimplexMethod;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 
 
 public class Controller {
@@ -40,6 +41,8 @@ public class Controller {
 
     private SimplexTable currentSimplexTable;
     private Task currentTask;
+    private Map<TextField, ArrayList<Integer>> matrixFields; // список с полями матрицы
+    private TextField support; // текущий опорный элемент
 
     public TextField numVars;          // количество переменных
     public TextField numRestrictions;  // количество ограничений
@@ -300,6 +303,8 @@ public class Controller {
     }
 
     private void createMatrixFieldsSMAB(String[][] mtx, ArrayList<Integer> base, GridPane gridPane) {
+        matrixFields = new HashMap<>(); // инициализируем словарь с текстовыми полями
+
         // Очищаем старые поля
         gridPane.getChildren().clear();
 
@@ -329,6 +334,15 @@ public class Controller {
                 // Добавляем поля в GridPane, задаем их позицию
                 gridPane.add(textField, col, row);
                 GridPane.setMargin(textField, new Insets(2.5, 2.5, 2.5, 2.5)); // отступы слева и справа
+
+                // выделение цветом опорного элемента
+                if (Objects.equals(currentSimplexTable.getMode(), Task.MANUAL_MODE)) {
+                    if (SimplexMethod.checkSupport(currentSimplexTable, row, col - 1)) {
+                        textField.setStyle("-fx-background-color: yellow;");
+                        textField.setOnMouseClicked(this::handleChoiceSupport);
+                    }
+                }
+                matrixFields.put(textField, new ArrayList<>(List.of(row, col - 1))); // добавление в общий список
             }
 
             TextField textField = new TextField();
@@ -444,6 +458,10 @@ public class Controller {
         } else {
             Button stepUp = new Button("Шаг вперед");
             Button stepBack = new Button("Шаг назад");
+
+            stepUp.setOnAction(actionEvent -> handleStepUpSM());
+            stepBack.setOnAction(actionEvent -> handleStepBackSM());
+
             buttonsSMVBox.getChildren().addAll(stepUp, stepBack);
         }
         // заполнение функции
@@ -451,6 +469,10 @@ public class Controller {
 
         // заполнение матрицы
         createMatrixFieldsSMAB(currentSimplexTable.getMatrixStr(), currentSimplexTable.getBase(), gridPaneMatrixSM);
+
+        // очистка панели ответа
+        xSolutionSMGridPane.getChildren().clear();
+        ySolutionSMGridPane.getChildren().clear();
     }
 
 
@@ -471,6 +493,7 @@ public class Controller {
 
     private void updateArtificialBasisTab() {
         // метод для добавления данных во вкладку симплекс метода
+        support = null; // обнуляем текущие координаты опорного элемента
 
         // очистка от предыдущих данных
         taskTypeAB.clear();
@@ -497,6 +520,9 @@ public class Controller {
         } else {
             Button stepUp = new Button("Шаг вперед");
             Button stepBack = new Button("Шаг назад");
+
+            stepUp.setOnAction(actionEvent -> handleStepUpAb());
+            stepBack.setOnAction(actionEvent -> handleStepBackAb());
             buttonsABVBox.getChildren().addAll(stepUp, stepBack);
         }
 
@@ -605,11 +631,15 @@ public class Controller {
 
     private void goToSM() {
         // метод для перехода от ИБ к СМ
-        buttonsABVBox.getChildren().getFirst().setDisable(true);
+        buttonsABVBox.getChildren().clear(); // удаляем кнопки для работы в ИБ
         tabPane.getSelectionModel().select(simplexTab); // переход на другую вкладку
-
         updateSimplexTab(); // обновление симплекс таблицы
-        getSolutionSM(); // получение решания симплекс методом
+        support = null; // удаляем старые данные
+
+        if (Objects.equals(currentSimplexTable.getMode(), Task.AUTO_MODE)) {
+            buttonsABVBox.getChildren().getFirst().setDisable(true);
+            getSolutionSM(); // получение решения симплекс методом
+        }
     }
 
     private String getBasisStr() {
@@ -639,6 +669,10 @@ public class Controller {
 
         } else {
             currentSimplexTable = SimplexMethod.gauss(currentTask);
+            if (currentSimplexTable.getErrorMassage() != null) {
+                ErrorMessage.showError("Некорректные данные", currentSimplexTable.getErrorMassage());
+                return;
+            }
             updateSimplexTab();
             tabPane.getSelectionModel().select(simplexTab);
         }
@@ -664,5 +698,89 @@ public class Controller {
         } else {
             ErrorMessage.showError("Ошибка", "Нет данных для сохранения!");
         }
+    }
+
+    @FXML
+    private void handleStepUpAb() {
+        ArrayList<Integer> supportCoords = matrixFields.get(support); // получение координат текущего опорного элемента
+
+        // шаг вперед ИБ
+        if (supportCoords == null) {
+            ErrorMessage.showWarning("Не выбран опорный элемент!", "Выберите опорный элемент для текущего шага.");
+            return;
+        }
+        // шаг ИБ
+        currentSimplexTable = ArtificialBasisMethod.artificialBasisStep(
+                currentSimplexTable, supportCoords.getFirst(), supportCoords.getLast(), currentTask.getFunction());
+
+        if (currentSimplexTable.getErrorMassage() != null) {
+            ErrorMessage.showError("Ошибка", currentSimplexTable.getErrorMassage());
+            return;
+        }
+
+        updateArtificialBasisTab();
+
+        if (currentSimplexTable.isDecide()) {
+            // задача решена
+            buttonsABVBox.getChildren().clear();
+            Button goToSMButton = new Button("Перейти к СМ");
+            Button stepBack = new Button("Шаг назад");
+            goToSMButton.setOnAction(actionEvent -> goToSM());
+            stepBack.setOnAction(actionEvent -> handleStepBackAb());
+            buttonsABVBox.getChildren().addAll(goToSMButton, stepBack);
+        }
+    }
+
+    @FXML
+    private void handleStepBackAb() {
+        // шаг назад ИБ
+    }
+
+    @FXML
+    private void handleStepUpSM() {
+        // шаг вперед СМ
+        ArrayList<Integer> supportCoords = matrixFields.get(support); // получение координат текущего опорного элемента
+        if (supportCoords == null) {
+            ErrorMessage.showWarning("Не выбран опорный элемент!", "Выберите опорный элемент для текущего шага.");
+            return;
+        }
+        // шаг СМ
+        currentSimplexTable = SimplexMethod.simplexStep(currentSimplexTable, supportCoords.getFirst(), supportCoords.getLast(), false);
+
+        if (currentSimplexTable.getErrorMassage() != null) {
+            ErrorMessage.showError("Ошибка", currentSimplexTable.getErrorMassage());
+            return;
+        }
+
+        // проверка на решенную задачу
+        if (currentSimplexTable.isDecide()) {
+            buttonsSMVBox.getChildren().clear();
+            Button stepBack = new Button("Шаг назад");
+            stepBack.setOnAction(actionEvent -> handleStepBackSM());
+            buttonsSMVBox.getChildren().add(stepBack);
+            getSolutionSM(); // получение решения симплекс методом
+            return;
+        }
+
+        // обновление таблицы
+        updateSimplexTab();
+    }
+
+
+    @FXML
+    private void handleStepBackSM() {
+        // шаг назад СМ
+    }
+
+    @FXML
+    private void handleChoiceSupport(MouseEvent mouseEvent) {
+        // обработка выбора опорного элемента
+        TextField textField = (TextField) mouseEvent.getSource();
+        textField.setStyle("-fx-background-color: red;");
+        if (support != null) {
+            support.setStyle("-fx-background-color: yellow;"); // установка старого выделения для предыдущего опорного элемента
+
+        }
+        support = textField; // запись нового опорного элемента
     }
 }
