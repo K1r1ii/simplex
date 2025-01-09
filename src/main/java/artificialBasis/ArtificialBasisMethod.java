@@ -4,6 +4,7 @@ import dataStorage.*;
 import simplex.SimplexMethod;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Класс, реализующий методы для поиска начального базиса в задаче на поиск оптимального решения.
@@ -69,7 +70,6 @@ public class ArtificialBasisMethod {
      * @return объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу готовую к использованию в основном алгоритме
      */
     public static SimplexTable autoMode(SimplexTable simplexTable, ArrayList<Fraction> function) {
-
         boolean isDecide = simplexTable.isDecide();
          while (!isDecide) {
              simplexTable = artificialBasisStep(simplexTable, -1, -1, function);
@@ -96,17 +96,13 @@ public class ArtificialBasisMethod {
             int supportColumn,
             ArrayList<Fraction> originalFunction
             ) {
-
-        // удаление столбцов с выведенной дополнительной переменной
-        simplexTable = deleteAdditionalColumn(simplexTable, originalFunction);
-        // удаление нулевых строк
-        simplexTable = deleteNullString(simplexTable);
-
         // вызываем шаг симплекс-метода
         SimplexTable newTable = SimplexMethod.simplexStep(simplexTable, supportRow, supportColumn, false);
 
+
         // удаление столбцов с выведенной дополнительной переменной
         newTable = deleteAdditionalColumn(newTable, originalFunction);
+
         // удаление нулевых строк
         newTable = deleteNullString(newTable);
 
@@ -125,8 +121,14 @@ public class ArtificialBasisMethod {
             }
             ArrayList<Fraction> newFunction = expressionFunction(newTable, originalFunction);
             newTable.setFunction(newFunction);
+
+            // ставим метку перехода на симплекс метод
+            Step lastStep = newTable.getLastStep();
+            lastStep.setEndAB(true);
             return newTable;
         }
+        Step laststep = newTable.getLastStep();
+        laststep.setMethod(Step.ARTIFICIAL_BASIS_METHOD);
         return newTable;
     }
 
@@ -186,13 +188,21 @@ public class ArtificialBasisMethod {
      * @return объект класса <code>SimplexTable</code>, содержащий ту же симплекс-таблицу, но с удаленными дополнительными переменными
      */
     private static SimplexTable deleteAdditionalColumn(SimplexTable simplexTable, ArrayList<Fraction> originalFunction) {
-        ArrayList<Integer> additionalVars = new ArrayList<>();
+        int additionalVar = -1;
         ArrayList<Integer> freeVars = simplexTable.getFreeVars();
+
+        // для сохранения удаленного столбца
+        int columnIndex = -1;
+        int varNum = -1;
+        ArrayList<Fraction> delColumnValues= new ArrayList<>();
 
         // ищем индексы дополнительных переменных
         for (int i: freeVars) {
             if (i > originalFunction.size()) {
-                additionalVars.add(freeVars.indexOf(i));
+                additionalVar = freeVars.indexOf(i);
+                columnIndex = additionalVar;
+                varNum = i;
+                break;
             }
         }
 
@@ -200,7 +210,7 @@ public class ArtificialBasisMethod {
         ArrayList<Fraction> function = simplexTable.getFunction();
 
         // инициализация нулевой матрицы новой размерности
-        Matrix newMatrix = new Matrix(matrix.length, matrix[0].length - additionalVars.size());
+        Matrix newMatrix = new Matrix(matrix.length, matrix[0].length - (additionalVar == -1 ? 0 : 1));
 
         // инициализация функции новой размерности
         ArrayList<Fraction> newFunction = new ArrayList<>();
@@ -212,9 +222,10 @@ public class ArtificialBasisMethod {
         for (int i = 0; i < matrix.length; i++) {
             int countAdditional = 0;
             for (int j = 0; j < matrix[0].length; j++) {
-                if (!additionalVars.contains(j)) {
+                if (additionalVar != j) {
                     newMatrix.addElementByIndex(i, j - countAdditional, matrix[i][j]);
                 } else {
+                    delColumnValues.add(matrix[i][j]);
                     countAdditional++;
                 }
             }
@@ -222,20 +233,31 @@ public class ArtificialBasisMethod {
 
         // заполнение новой функции
         for (int i = 0; i < function.size(); i++) {
-            if (!additionalVars.contains(i)) {
+            if (additionalVar != i) {
                 newFunction.add(function.get(i));
             }
         }
 
         // заполнение нового списка свободных переменных
         for (int i = 0; i < freeVars.size(); i++) {
-            if (!additionalVars.contains(i)) {
+            if (additionalVar != i) {
                 newFreeVars.add(freeVars.get(i));
             }
         }
 
+        // обновление списка шагов
+        if (additionalVar != -1) {
+            Fraction functionValue = function.get(additionalVar);
+            DelColumn delColumn = new DelColumn(delColumnValues, functionValue, columnIndex, varNum);
+
+            // изменение последнего шага
+            Step lastStep = simplexTable.getAndDelLastStep();
+            lastStep.setDelColumn(delColumn);
+            simplexTable.addStep(lastStep);
+        }
+
         return new SimplexTable(newFunction, newMatrix, simplexTable.getBase(), newFreeVars, simplexTable.isDecide(),
-                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
+                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode(), simplexTable.getSteps());
     }
 
     /**
@@ -262,7 +284,10 @@ public class ArtificialBasisMethod {
         ArrayList<Integer> curBase = simplexTable.getBase();
         Fraction[][] matrix = simplexTable.getMatrix();
 
-        ArrayList<Integer> delStrings = new ArrayList<>();
+        ArrayList<Integer> delIndStrings = new ArrayList<>();
+
+        // для сохранения удаленных строк
+        ArrayList<DelString> delStrings = new ArrayList<>();
 
         // поиск нулевых строк
         for (int i = 0; i < matrix.length; i++) {
@@ -274,35 +299,50 @@ public class ArtificialBasisMethod {
                 }
             }
             if (zeroFlag) {
-                delStrings.add(i);
+                delIndStrings.add(i);
             }
         }
-
         // удаление нулевых строк
-        Matrix newMatrix = new Matrix(matrix.length - delStrings.size(), matrix[0].length);
+        Matrix newMatrix = new Matrix(matrix.length - delIndStrings.size(), matrix[0].length);
         int countDelStr = 0;
         for (int i = 0; i < matrix.length; i++) {
-            if (!delStrings.contains(i)) {
+            if (!delIndStrings.contains(i)) {
                 for (int j = 0; j < matrix[0].length; j++) {
                     newMatrix.addElementByIndex(i - countDelStr, j, matrix[i][j]);
                 }
             } else {
                 countDelStr++;
+                // сохранение удаленной строки
+                ArrayList<Fraction> delString = new ArrayList<>(Arrays.asList(matrix[i]));
+                delStrings.add(new DelString(delString, i, curBase.get(i)));
             }
         }
 
         // перезапись базиса
         ArrayList<Integer> newBase = new ArrayList<>();
         for (int i : curBase) {
-            if (!delStrings.contains(curBase.indexOf(i))) {
+            if (!delIndStrings.contains(curBase.indexOf(i))) {
                 newBase.add(i);
             }
         }
 
+        // обновление данных в этом шаге
+        if (!delIndStrings.isEmpty()) {
+            Step lastStep = simplexTable.getLastStep();
+            lastStep.setDelStrings(delStrings);
+        }
+
         return new SimplexTable(simplexTable.getFunction(), newMatrix, newBase, simplexTable.getFreeVars(),
-                simplexTable.isDecide(), simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
+                simplexTable.isDecide(), simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode(),
+                simplexTable.getSteps());
     }
 
+    /**
+     * Метод, реализующий "холостой" шаг симплекс-метода.
+     * @param simplexTable текущая симплекс-таблица.
+     * @param additionalVarNum номер дополнительной переменной, которую надо вывести.
+     * @return SimplexTable - таблица с выведенной доп. переменной.
+     */
     private static SimplexTable freeStep(SimplexTable simplexTable, int additionalVarNum) {
         // метод, реализующий холостой ход симплекс таблицы
         Fraction[][] mtx = simplexTable.getMatrix();
@@ -321,5 +361,18 @@ public class ArtificialBasisMethod {
         simplexTable = SimplexMethod
                 .simplexStep(simplexTable, addVarRowInd, addVarColInd, true);
         return simplexTable;
+    }
+
+    /**
+     * Метод для получения нулевой функции нужной размерности.
+     * @param function исходная функция.
+     * @return ArrayList<Fraction> - список нулевых коэффициентов функции.
+     */
+    public static ArrayList<Fraction> getZeroFunction(ArrayList<Fraction> function) {
+        ArrayList<Fraction> zeroFunction = new ArrayList<>();
+        for (Fraction i : function) {
+            zeroFunction.add(Fraction.ZERO);
+        }
+        return zeroFunction;
     }
 }

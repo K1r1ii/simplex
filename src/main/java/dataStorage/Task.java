@@ -70,7 +70,15 @@ public class Task {
             String fracType,
             String mode
     ){
-        this.function = function;
+        // домножение функции на -1 если тип задачи max
+        if (Objects.equals(taskType, SimplexTable.MAX_TYPE)) {
+            this.function = new ArrayList<>();
+            for (Fraction fraction : function) {
+                this.function.add(Fraction.ZERO.subtract(fraction));
+            }
+        } else {
+            this.function = function;
+        }
         this.matrix = matrix;
         this.isDecide = isDecide;
         this.base = null;
@@ -91,64 +99,32 @@ public class Task {
         return function;
     }
 
-    public void setFunction(ArrayList<Fraction> function) {
-        this.function = function;
-    }
-
     public Matrix getMatrix() {
         return matrix;
-    }
-
-    public void setMatrix(Matrix matrix) {
-        this.matrix = matrix;
     }
 
     public ArrayList<Integer> getBase() {
         return base;
     }
 
-    public void setBase(ArrayList<Integer> base) {
-        this.base = base;
-    }
-
     public boolean isDecide() {
         return isDecide;
-    }
-
-    public void setDecide(boolean decide) {
-        isDecide = decide;
     }
 
     public String getErrorMessage() {
         return errorMessage;
     }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
     public String getTaskType() {
         return taskType;
-    }
-
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
     }
 
     public String getFracType() {
         return fracType;
     }
 
-    public void setFracType(String fracType) {
-        this.fracType = fracType;
-    }
-
     public String getMode() {
         return mode;
-    }
-
-    public void setMode(String mode) {
-        this.mode = mode;
     }
 
 

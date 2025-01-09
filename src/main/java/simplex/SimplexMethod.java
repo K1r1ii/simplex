@@ -1,5 +1,6 @@
 package simplex;
 
+import artificialBasis.ArtificialBasisMethod;
 import dataStorage.*;
 
 import java.util.ArrayList;
@@ -16,14 +17,6 @@ public class SimplexMethod {
      * @return объект класс <code>Solution</code> содержащий решение задачи: значение функции и вектор аргументов.
      */
     public static Solution autoMode(SimplexTable simplexTable){
-        // домножение на -1 целевой функции в режиме MAX
-        if (Objects.equals(simplexTable.getTaskType(), SimplexTable.MAX_TYPE)) {
-            ArrayList<Fraction> newFunction = new ArrayList<>();
-            for (int i = 0; i < simplexTable.getFunction().size(); i++) {
-                newFunction.add(Fraction.ZERO.subtract(simplexTable.getFunction().get(i)));
-            }
-            simplexTable.setFunction(newFunction);
-        }
         SimplexTable newStep = simplexStep(simplexTable, -1, -1, false);
         if(newStep.getErrorMassage() !=  null){
             return new Solution(newStep.getErrorMassage());
@@ -37,28 +30,7 @@ public class SimplexMethod {
             }
             isDecide = newStep.isDecide();
         }
-
-        ArrayList<Fraction> solutionVector = new ArrayList<>();
-        // заполнение вектора решения нулями
-        for(int i = 0; i < newStep.getBase().size() + newStep.getFreeVars().size(); i++){
-            solutionVector.add(Fraction.ZERO);
-        }
-
-        // заполнение базисных значений
-        int colSize = newStep.getMatrix()[0].length;
-
-        for(int i = 0; i < newStep.getBase().size(); i++){
-            solutionVector.set(newStep.getBase().get(i) - 1, newStep.getMatrix()[i][colSize - 1]);
-        }
-
-        Fraction functionValue;
-        if (Objects.equals(simplexTable.getTaskType(), SimplexTable.MAX_TYPE)) {
-            functionValue = newStep.getFunction().getLast();
-        } else {
-            functionValue = Fraction.ZERO.subtract(newStep.getFunction().getLast());
-        }
-
-        return new Solution(functionValue, solutionVector, simplexTable.getFracType());
+        return getSolution(newStep);
     }
 
     /**
@@ -97,6 +69,13 @@ public class SimplexMethod {
             return new SimplexTable("Функция не ограничена - оптимального решения нет.");
         }
         if (coords.equals(List.of(-1, -1))){
+            // задача решена
+            simplexTable.setDecide(true);
+            return simplexTable;
+        }
+
+        // проверка на решенную задачу
+        if (checkSolution(simplexTable) && !freeStep) {
             // задача решена
             simplexTable.setDecide(true);
             return simplexTable;
@@ -155,27 +134,90 @@ public class SimplexMethod {
             if (i == sCol) continue;
             newFunction.set(i, newFunction.get(i).subtract(oldSEl.multiply(newMatrix.getMatrix()[sRow][i])));
         }
+        // обновление списка шагов
+        if (!freeStep) {
+            Step newStep;
+            if (simplexTable.getLastStep() != null) {
+                newStep = new Step(simplexTable.getLastStep().getNum() + 1, coords, Step.SIMPLEX_METHOD);
+            } else {
+                newStep = new Step(0, coords, Step.SIMPLEX_METHOD);
+            }
+            simplexTable.addStep(newStep);
+        }
 
+        // новая симплекс таблица
         SimplexTable newTable = new SimplexTable(newFunction,newMatrix, newBase, newFreeV, false,
-                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode());
+                simplexTable.getTaskType(), simplexTable.getFracType(), simplexTable.getMode(), simplexTable.getSteps());
+
+        // проверка значений базисных переменных
         if (!checkBasisValue(newTable)) {
             return new SimplexTable("Исходный базис является ошибочным");
         }
-        // проверка на решенную задачу
-        coords = findSupport(newTable);
 
-        if (coords != null && coords.equals(List.of(-1, -1))){
+        // проверка на решенную задачу
+        if (checkSolution(newTable)) {
             // задача решена
             newTable.setDecide(true);
-            return newTable;
         }
+
         return newTable;
     }
 
 
-    public static Task simplexStepBack(Task curTask, int supportRow, int supportColumn, Fraction supportValue){
-        // TODO: сделать метод для возврата к предыдущему шагу по опорному элементу
-        return null;
+    /**
+     * Метод, реализующий шаг назад для симплекс-метода и ИБ.
+     * @param simplexTable - текущая симплекс-таблица.
+     * @return SimplexTable - новая таблица.
+     */
+    public static SimplexTable simplexStepBack(SimplexTable simplexTable){
+        // получение координат предыдущего опорного элемента
+        Step lastStep = simplexTable.getAndDelLastStep();
+        if (lastStep == null) {
+            return null;
+        }
+
+        // обнуление функции (если возвращаемся к ИБ)
+        if (lastStep.getEndAB()) {
+            simplexTable.setFunction(ArtificialBasisMethod.getZeroFunction(simplexTable.getFunction()));
+        }
+        ArrayList<DelString> delStrings = lastStep.getDelStrings();
+
+        // добавление нулевых строк
+        if (delStrings != null) {
+            for (DelString delString : delStrings) {
+                // добавление строки в матрицу
+                Matrix matrix = simplexTable.getMatrixObject();
+                matrix.addRowByIndex(delString);
+
+                // добавление значения в список базисных переменных
+                ArrayList<Integer> baseVars = simplexTable.getBase();
+                baseVars.add(delString.getStringIndex(), delString.getBaseNum());
+            }
+        }
+
+        DelColumn delColumn = lastStep.getDelColumn();
+        // добавление старого столбца
+        if (delColumn != null) {
+            // добавление столбца в матрицу
+            Matrix matrix = simplexTable.getMatrixObject();
+            matrix.addColumnByIndex(delColumn);
+
+            // добавление значения в функцию
+            ArrayList<Fraction> function = simplexTable.getFunction();
+            function.add(delColumn.getColumnIndex(), delColumn.getFunctionValue());
+
+            // добавление значения в список свободных переменных
+            ArrayList<Integer> freeVars = simplexTable.getFreeVars();
+            freeVars.add(delColumn.getColumnIndex(), delColumn.getVarNum());
+        }
+
+        ArrayList<Integer> support = lastStep.getSupport();
+        
+        int row = support.getFirst();
+        int column = support.getLast();
+
+        // симплекс шаг с этим опорным элементом
+        return SimplexMethod.simplexStep(simplexTable, row, column, true);
     }
 
     /**
@@ -376,29 +418,6 @@ public class SimplexMethod {
 
 
     /**
-     * Метод возвращающий все опорные элементы для текущей таблицы
-     * @param simplexTable текущая симплекс таблица
-     * @return ArrayList<ArrayList<Integer>> - список координат всех опорных элементов
-     */
-    public static ArrayList<ArrayList<Integer>> findAllSupports(SimplexTable simplexTable) {
-        ArrayList<ArrayList<Integer>> supports = new ArrayList<>(); // список с координатами всех опорных элементов
-
-        Fraction[][] mtx = simplexTable.getMatrix();
-        for (int i = 0; i < mtx.length; i++) {
-            for (int j = 0; j < mtx[0].length - 1; j++) {
-                ArrayList<Integer> coord = new ArrayList<>(); // список с координатами
-                if (checkSupport(simplexTable, i, j)) {
-                    coord.add(i);
-                    coord.add(j);
-                    supports.add(coord);
-                }
-            }
-        }
-        return supports;
-    }
-
-
-    /**
      * Метод для проверки выбранного опорного элемента.
      * @param simplexTable объект, содержащий текущую симплекс таблицу.
      * @param supportRow индекс ряда матрицы, содержащего опорный элемент.
@@ -411,7 +430,8 @@ public class SimplexMethod {
         int lastIndex = matrix[0].length - 1;
 
         // коэффициент функции > 0
-        if (simplexTable.getFunction().get(supportColumn).isMore(Fraction.ZERO)) {
+        if (simplexTable.getFunction().get(supportColumn).isMore(Fraction.ZERO) ||
+                simplexTable.getFunction().get(supportColumn).equals(Fraction.ZERO)) {
             return false;
         }
 
@@ -451,5 +471,45 @@ public class SimplexMethod {
             }
         }
         return true;
+    }
+
+    /**
+     * Метод для проверки решена ли задача.
+     * @param simplexTable текущая симплекс-таблица задачи.
+     * @return <code>true</code> если задача решена
+     *         <code>false</code> если задача не решена
+     */
+    public static boolean checkSolution(SimplexTable simplexTable) {
+        return Objects.equals(findSupport(simplexTable), new ArrayList<>(List.of(-1, -1)));
+    }
+
+    /**
+     * Метод для получения решения из данных симплекс-таблицы
+     * @param simplexTable текущая симплекс-таблица
+     * @return Solution объект с данными решения задачи
+     */
+    public static Solution getSolution(SimplexTable simplexTable) {
+        ArrayList<Fraction> solutionVector = new ArrayList<>();
+        // заполнение вектора решения нулями
+        for(int i = 0; i < simplexTable.getBase().size() + simplexTable.getFreeVars().size(); i++){
+            solutionVector.add(Fraction.ZERO);
+        }
+
+        // заполнение базисных значений
+        int colSize = simplexTable.getMatrix()[0].length;
+
+        for(int i = 0; i < simplexTable.getBase().size(); i++){
+            solutionVector.set(simplexTable.getBase().get(i) - 1, simplexTable.getMatrix()[i][colSize - 1]);
+        }
+
+        // запись значения функции
+        Fraction functionValue;
+        if (Objects.equals(simplexTable.getTaskType(), SimplexTable.MAX_TYPE)) {
+            functionValue = simplexTable.getFunction().getLast();
+        } else {
+            functionValue = Fraction.ZERO.subtract(simplexTable.getFunction().getLast());
+        }
+
+        return new Solution(functionValue, solutionVector, simplexTable.getFracType());
     }
 }

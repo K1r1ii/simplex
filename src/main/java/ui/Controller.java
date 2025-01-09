@@ -2,7 +2,6 @@ package ui;
 
 import artificialBasis.ArtificialBasisMethod;
 import dataStorage.*;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -453,7 +452,7 @@ public class Controller {
         // генерация кнопок
         if (Objects.equals(currentSimplexTable.getMode(), "auto")) {
             Button autoModeButton = new Button("Решить");
-            autoModeButton.setOnAction(actionEvent -> getSolutionSM()); // назначаем действие
+            autoModeButton.setOnAction(actionEvent -> getAutoSolutionSM()); // назначаем действие
             buttonsSMVBox.getChildren().add(autoModeButton);
         } else {
             Button stepUp = new Button("Шаг вперед");
@@ -598,11 +597,23 @@ public class Controller {
         return null;
     }
 
-    private void getSolutionSM() {
+    private void getAutoSolutionSM() {
         // обработка действий при нажатии на кнопку "решить" во вкладке СМ
-
         Solution solution = SimplexMethod.autoMode(currentSimplexTable);
 
+        // отрисовка решения
+        showSolutionSM(solution);
+    }
+
+    private void getManualSolutionSM() {
+        // получение решения для пошагового режима
+        Solution solution = SimplexMethod.getSolution(currentSimplexTable);
+
+        // отрисовка решения
+        showSolutionSM(solution);
+    }
+
+    private void showSolutionSM(Solution solution) {
         if (solution.getErrorMessage() != null) {
             ErrorMessage.showError("Ошибка", solution.getErrorMessage());
             return;
@@ -637,8 +648,7 @@ public class Controller {
         support = null; // удаляем старые данные
 
         if (Objects.equals(currentSimplexTable.getMode(), Task.AUTO_MODE)) {
-            buttonsABVBox.getChildren().getFirst().setDisable(true);
-            getSolutionSM(); // получение решения симплекс методом
+            getAutoSolutionSM(); // получение решения симплекс методом
         }
     }
 
@@ -734,6 +744,25 @@ public class Controller {
     @FXML
     private void handleStepBackAb() {
         // шаг назад ИБ
+        SimplexTable previousSTable = SimplexMethod.simplexStepBack(currentSimplexTable);
+
+        // проверка на возможность шагнуть назад
+        if (previousSTable == null) {
+            ErrorMessage.showWarning("Внимание!", "Шаг назад невозможен!");
+            return;
+        }
+
+        // проверка на корректность полученной задачи
+        if (previousSTable.getErrorMassage() != null) {
+            ErrorMessage.showError("Ошибка", previousSTable.getErrorMassage());
+            return;
+        }
+
+        // применение обновления
+        currentSimplexTable = previousSTable;
+
+        updateArtificialBasisTab();
+
     }
 
     @FXML
@@ -758,7 +787,7 @@ public class Controller {
             Button stepBack = new Button("Шаг назад");
             stepBack.setOnAction(actionEvent -> handleStepBackSM());
             buttonsSMVBox.getChildren().add(stepBack);
-            getSolutionSM(); // получение решения симплекс методом
+            getManualSolutionSM(); // получение решения симплекс методом
             return;
         }
 
@@ -770,6 +799,36 @@ public class Controller {
     @FXML
     private void handleStepBackSM() {
         // шаг назад СМ
+        SimplexTable previousSTable = SimplexMethod.simplexStepBack(currentSimplexTable);
+
+        // проверка на возможность шагнуть назад
+        if (previousSTable == null) {
+            ErrorMessage.showWarning("Внимание!", "Шаг назад невозможен!");
+            return;
+        }
+
+        // проверка на корректность полученной задачи
+        if (previousSTable.getErrorMassage() != null) {
+            ErrorMessage.showError("Ошибка", previousSTable.getErrorMassage());
+            return;
+        }
+
+        // применение обновления
+        currentSimplexTable = previousSTable;
+
+        // меняем вкладку, если вернулись в ИБ
+        if (previousSTable.getLastStep() != null) {
+            if (Objects.equals(previousSTable.getLastStep().getMethod(), Step.SIMPLEX_METHOD)) {
+                updateSimplexTab();
+            } else {
+                tabPane.getSelectionModel().select(artificialBasisTab);
+                updateArtificialBasisTab();
+            }
+        } else {
+            updateSimplexTab();
+        }
+
+
     }
 
     @FXML
@@ -777,7 +836,7 @@ public class Controller {
         // обработка выбора опорного элемента
         TextField textField = (TextField) mouseEvent.getSource();
         textField.setStyle("-fx-background-color: red;");
-        if (support != null) {
+        if (support != null && support != textField) {
             support.setStyle("-fx-background-color: yellow;"); // установка старого выделения для предыдущего опорного элемента
 
         }

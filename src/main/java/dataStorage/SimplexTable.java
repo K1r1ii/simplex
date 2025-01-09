@@ -1,10 +1,6 @@
 package dataStorage;
 
-import java.awt.font.FontRenderContext;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Класс, для хранения текущего состояния задачи во время симплекс-метода.
@@ -18,10 +14,46 @@ public class SimplexTable {
     private String fracType;
     private String mode;
     private boolean isDecide;
+    private ArrayList<Step> steps;
     private String errorMassage;
 
     public static String MIN_TYPE = "min";
     public static String MAX_TYPE = "max";
+
+    /**
+     * Конструктор для инициализации новой симплекс-таблицы со списком опорных элементов
+     * @param function коэффициенты исходной функции
+     * @param matrix матрица ограничений
+     * @param base список номеров базисных переменных
+     * @param freeVars список номеров свободных переменных
+     * @param isDecide флаг решения задачи
+     * @param taskType тип задачи
+     * @param fracType тип дробей
+     * @param mode режим работы
+     * @param steps список проделанных шагов
+     */
+    public SimplexTable(
+            ArrayList<Fraction> function,
+            Matrix matrix,
+            ArrayList<Integer> base,
+            ArrayList<Integer> freeVars,
+            boolean isDecide,
+            String taskType,
+            String fracType,
+            String mode,
+            ArrayList<Step> steps
+    ) {
+        this.function = function;
+        this.matrix = matrix;
+        this.base = base;
+        this.freeVars = freeVars;
+        this.isDecide = isDecide;
+        this.taskType = taskType;
+        this.fracType = fracType;
+        this.mode = mode;
+        this.steps = steps;
+    }
+
 
     /**
      * Конструктор для инициализации новой симплекс-таблицы
@@ -30,6 +62,9 @@ public class SimplexTable {
      * @param base список номеров базисных переменных
      * @param freeVars список номеров свободных переменных
      * @param isDecide флаг решения задачи
+     * @param taskType тип задачи
+     * @param fracType тип дробей
+     * @param mode режим работы
      */
     public SimplexTable(
             ArrayList<Fraction> function,
@@ -49,6 +84,7 @@ public class SimplexTable {
         this.taskType = taskType;
         this.fracType = fracType;
         this.mode = mode;
+        this.steps = new ArrayList<>();
     }
 
     /**
@@ -83,12 +119,7 @@ public class SimplexTable {
         function = new ArrayList<>();
         for (int i = 0; i < curFunction.size(); i++){
             if(!base.contains(i + 1)){
-                if(Objects.equals(taskType, MAX_TYPE)) {
-                    function.add(Fraction.ZERO.subtract(curFunction.get(i)));
-                } else {
-                    function.add(curFunction.get(i));
-                }
-
+                function.add(curFunction.get(i));
             }
         }
 
@@ -107,9 +138,9 @@ public class SimplexTable {
         taskType = curTask.getTaskType();
         fracType = curTask.getFracType();
         mode = curTask.getMode();
+        steps = new ArrayList<>(); // инициализируем пустой список
 
     }
-
 
 
     public ArrayList<Fraction> getFunction() {
@@ -164,24 +195,16 @@ public class SimplexTable {
         return matrix.getMatrix();
     }
 
-    public void setMatrix(Matrix matrix) {
-        this.matrix = matrix;
+    public Matrix getMatrixObject() {
+        return matrix;
     }
 
     public ArrayList<Integer> getBase() {
         return base;
     }
 
-    public void setBase(ArrayList<Integer> base) {
-        this.base = base;
-    }
-
     public ArrayList<Integer> getFreeVars() {
         return freeVars;
-    }
-
-    public void setFreeVars(ArrayList<Integer> freeVars) {
-        this.freeVars = freeVars;
     }
 
     public boolean isDecide() {
@@ -196,32 +219,54 @@ public class SimplexTable {
         return errorMassage;
     }
 
-    public void setErrorMassage(String errorMassage) {
-        this.errorMassage = errorMassage;
-    }
-
     public String getTaskType() {
         return taskType;
-    }
-
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
     }
 
     public String getFracType() {
         return fracType;
     }
 
-    public void setFracType(String fracType) {
-        this.fracType = fracType;
-    }
-
     public String getMode() {
         return mode;
     }
 
-    public void setMode(String mode) {
-        this.mode = mode;
+    public ArrayList<Step> getSteps() {
+        return steps;
+    }
+
+    /**
+     * Метод для добавления нового опорного элемента
+     * @param step объект класс Step с данными о текущем шаге
+     */
+    public void addStep(Step step) {
+        steps.add(step);
+    }
+
+    /**
+     * Метод для извлечения последнего добавленного опорного элемента.
+     * @return Step - данные о последнем шаге.
+     *         null - если список был пустой.
+     */
+    public Step getAndDelLastStep() {
+        try {
+            return steps.removeLast();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * Метод для получения данных о последнем шаге
+     * @return Step - данные о последнем шаге
+     */
+    public Step getLastStep() {
+        try {
+            return steps.getLast();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
     }
 
 

@@ -1,5 +1,7 @@
 package dataStorage;
 
+import java.util.ArrayList;
+
 /**
  * Класс, реализующий хранение матрицы и методы, реализующие операции с ними.
  */
@@ -37,6 +39,55 @@ public class Matrix {
      */
     public void addElementByIndex(int i, int j, Fraction element){
         matrix[i][j] = element;
+    }
+
+
+    /**
+     *  Метод для добавления нового столбца в матрицу
+     * @param delColumn данные о новом столбце
+     */
+    public void addColumnByIndex(DelColumn delColumn) {
+        ArrayList<Fraction> column = delColumn.getColumn();
+        int columnIndex = delColumn.getColumnIndex();
+
+        Matrix newMatrix = new Matrix(matrix.length, matrix[0].length + 1);
+        Fraction[][] newMtx = newMatrix.getMatrix();
+        for (int i = 0; i < newMtx.length; i++) {
+            int count = 0;
+            for (int j = 0; j < newMtx[0].length; j++) {
+                if (columnIndex == j) {
+                    newMatrix.addElementByIndex(i, j, column.get(i));
+                    count++;
+                } else {
+                    newMatrix.addElementByIndex(i, j, matrix[i][j - count]);
+                }
+            }
+        }
+        setMatrix(newMtx);
+    }
+
+    /**
+     * Метод для добавления новой строки в матрицу
+     * @param delString данные о новой строке
+     */
+    public void addRowByIndex(DelString delString) {
+        ArrayList<Fraction> string = delString.getString();
+        int stringIndex = delString.getStringIndex();
+
+        Matrix newMatrix = new Matrix(matrix.length + 1, matrix[0].length);
+        Fraction[][] newMtx = newMatrix.getMatrix();
+        int count = 0;
+        for (int i = 0; i < newMtx.length; i++) {
+            if (stringIndex == i) count++;
+            for (int j = 0; j < newMtx[0].length; j++) {
+                if (stringIndex == i) {
+                    newMatrix.addElementByIndex(i, j, string.get(j));
+                } else {
+                    newMatrix.addElementByIndex(i, j, matrix[i - count][j]);
+                }
+            }
+        }
+        setMatrix(newMtx);
     }
 
     /**
