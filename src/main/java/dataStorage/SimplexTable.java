@@ -249,6 +249,7 @@ public class SimplexTable {
      *         null - если список был пустой.
      */
     public Step getAndDelLastStep() {
+        if (steps == null) return null;
         try {
             return steps.removeLast();
         } catch (NoSuchElementException e) {

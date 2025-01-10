@@ -19,7 +19,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.Controller">
+<BorderPane xmlns="http://javafx.com/javafx/14" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ui.Controller">
     <!-- Добавляем MenuBar в верхнюю часть -->
     <top>
         <MenuBar>
@@ -35,7 +35,7 @@
 
     <!-- В центр размещаем ваш TabPane -->
     <center>
-        <TabPane fx:id="tabPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="626.0" prefWidth="813.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1">
+        <TabPane fx:id="tabPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="626.0" prefWidth="813.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/14" xmlns:fx="http://javafx.com/fxml/1">
 
             <Tab closable="false" text="Задача">
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="458.0" prefWidth="699.0">
@@ -161,8 +161,8 @@
                             <ComboBox fx:id="comboFrac" prefWidth="150.0" value="обычные">
                                 <items>
                                     <FXCollections fx:factory="observableArrayList">
-                                        <String fx:value="обычные" />
-                                        <String fx:value="десятичные" />
+                                        <String fx:value="ordinary" />
+                                        <String fx:value="decimal" />
                                     </FXCollections>
                                 </items>
                                 <VBox.margin>

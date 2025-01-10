@@ -28,6 +28,10 @@ public class ReadTask {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode rootNode = mapper.readTree(jsonFile); // объект для работы с деревом json
 
+            if (!checkJson(rootNode)) {
+                return new Task("Некорректный json файл!");
+            }
+
             int countVars = rootNode.path("countVars").asInt(); // кол-во переменных
             int countRestrictions = rootNode.path("countRestrictions").asInt(); // кол-во ограничений
             String taskType = rootNode.path("taskType").asText(); // тип задачи
@@ -51,12 +55,12 @@ public class ReadTask {
             ArrayList<Fraction> function = new ArrayList<>();
             JsonNode functionNode = rootNode.path("function");
             if (functionNode.size() != countVars) {
-                return new Task("ERROR: Некорректная функция.");
+                return new Task("Некорректная функция.");
             }
             for (int i = 0; i < functionNode.size(); i++) {
                 Fraction fraction = Fraction.parseFraction(functionNode.get(i).asText());
                 if (!Objects.equals(fraction.getFracType(), fracType) && !Objects.equals(fraction.getFracType(), Fraction.INTEGER)) {
-                    return new Task("ERROR: Некорректный тип дроби. ");
+                    return new Task("Некорректный тип дроби. ");
                 }
                 function.add(fraction);
             }
@@ -66,17 +70,17 @@ public class ReadTask {
             JsonNode restrictionsNode = rootNode.path("restrictions");
 
             if (restrictionsNode.size() != countRestrictions) {
-                return new Task("ERROR: Некорректное количество ограничений.");
+                return new Task("Некорректное количество ограничений.");
             }
             for (int i = 0; i < restrictionsNode.size(); i++) {
                 JsonNode rowNode = restrictionsNode.get(i);
                 if (rowNode.size() != countVars + 1) {
-                    return new Task("ERROR: Некорректное ограничение.");
+                    return new Task("Некорректное ограничение.");
                 }
                 for (int j = 0; j < rowNode.size(); j++) {
                     Fraction fraction = Fraction.parseFraction(rowNode.get(j).asText());
                     if (!Objects.equals(fraction.getFracType(), fracType) && !Objects.equals(fraction.getFracType(), Fraction.INTEGER)) {
-                        return new Task("ERROR: Некорректный тип дроби.");
+                        return new Task("Некорректный тип дроби.");
                     }
                     matrix.addElementByIndex(i, j, fraction);
                 }
@@ -99,5 +103,12 @@ public class ReadTask {
 
         Map<String, Object> taskMap = task.toMap();
         mapper.writeValue(jsonFile, taskMap);
+    }
+
+    private static boolean checkJson(JsonNode jsonNode) {
+        return jsonNode.has("countVars") && jsonNode.has("countRestrictions") &&
+                jsonNode.has("taskType") && jsonNode.has("fracType") &&
+                jsonNode.has("mode") && jsonNode.has("base") &&
+                jsonNode.has("function") && jsonNode.has("restrictions");
     }
 }

@@ -121,7 +121,7 @@ public class Controller {
         }
 
         String taskType = comboTask.getValue();
-        String fracType = Objects.equals(comboFrac.getValue(), "обычные") ? "ordinary" : "decimal";
+        String fracType = comboFrac.getValue();
         String mode = Objects.equals(comboMode.getValue(), "авто") ? "auto" : "manual";
         ArrayList<Integer> base = getCheckBoxData();
 
@@ -542,7 +542,12 @@ public class Controller {
             for (int col = 1; col <= columns; col++) {  // Пропускаем первый столбец с Label "f(x)"
                 TextField textField = (TextField) getNodeFromGridPane(row, col, "matrix");
                 // Считываем данные и сохраняем их в матрице
-                matrixData[row][col - 1] = Fraction.parseFraction(textField.getText());
+                Fraction fraction = Fraction.parseFraction(textField.getText());
+                if (!Objects.equals(fraction.getFracType(), comboFrac.getValue()) && !Objects.equals(fraction.getFracType(), Fraction.INTEGER)) {
+                    ErrorMessage.showError("Некорректные данные", "Неверный тип дроби.");
+                    throw new NumberFormatException("Неверный тип дроби.");
+                }
+                matrixData[row][col - 1] = fraction;
             }
         }
 
@@ -556,7 +561,12 @@ public class Controller {
 
         for (int col = 1; col <= columns; col++) {
             TextField textField = (TextField) getNodeFromGridPane(1, col, "function");
-            functionData.add(Fraction.parseFraction(textField.getText()));
+            Fraction fraction = Fraction.parseFraction(textField.getText());
+            if (!Objects.equals(fraction.getFracType(), comboFrac.getValue()) && !Objects.equals(fraction.getFracType(), Fraction.INTEGER)) {
+                ErrorMessage.showError("Некорректные данные", "Неверный тип дроби.");
+                throw new NumberFormatException("Неверный тип дроби.");
+            }
+            functionData.add(fraction);
         }
         return functionData;
     }
@@ -626,13 +636,16 @@ public class Controller {
 
     private void getSolutionAB() {
         // обработка действий при нажатии на кнопку "решить" во вкладке ИБ
-        currentSimplexTable = ArtificialBasisMethod.autoMode(currentSimplexTable, currentTask.getFunction());
+        SimplexTable simplexTable = ArtificialBasisMethod.autoMode(currentSimplexTable, currentTask.getFunction());
 
         // записываем 0 шаг симплекс метода
-        if (currentSimplexTable.getErrorMassage() != null) {
-            ErrorMessage.showError("Некорректные данные", currentSimplexTable.getErrorMassage());
+        if (simplexTable.getErrorMassage() != null) {
+            ErrorMessage.showError("Некорректные данные", simplexTable.getErrorMassage());
             return;
         }
+
+        currentSimplexTable = simplexTable;
+
         updateArtificialBasisTab();
         buttonsABVBox.getChildren().clear(); // удаляем кнопку "решить"
         Button goToSMButton = new Button("Решить полностью");
@@ -668,6 +681,8 @@ public class Controller {
         fileChooser.setTitle("Загрузить задачу");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Task Files", "*.json"));
         File file = fileChooser.showOpenDialog(tabPane.getScene().getWindow());
+        if (file == null) return; // файл не выбрали
+
         currentTask = ReadTask.readSMFromJson(file);
 
         if (currentTask.getErrorMessage() != null) {

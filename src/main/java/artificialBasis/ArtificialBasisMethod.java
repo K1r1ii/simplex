@@ -99,12 +99,13 @@ public class ArtificialBasisMethod {
         // вызываем шаг симплекс-метода
         SimplexTable newTable = SimplexMethod.simplexStep(simplexTable, supportRow, supportColumn, false);
 
-
         // удаление столбцов с выведенной дополнительной переменной
         newTable = deleteAdditionalColumn(newTable, originalFunction);
 
         // удаление нулевых строк
         newTable = deleteNullString(newTable);
+
+
 
         if (newTable.isDecide()) {
             int additionalVarNum = checkAdditionalVarInBasis(newTable, originalFunction);
@@ -327,8 +328,8 @@ public class ArtificialBasisMethod {
         }
 
         // обновление данных в этом шаге
-        if (!delIndStrings.isEmpty()) {
-            Step lastStep = simplexTable.getLastStep();
+        Step lastStep = simplexTable.getLastStep();
+        if (!delIndStrings.isEmpty() && lastStep != null) {
             lastStep.setDelStrings(delStrings);
         }
 

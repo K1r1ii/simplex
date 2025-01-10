@@ -19,6 +19,7 @@ public class FXMLAppLauncher extends Application {
 
             // Установка заголовка и отображение окна
             primaryStage.setTitle("JavaFX FXML Example");
+            primaryStage.setResizable(false);
             primaryStage.setScene(scene);
             primaryStage.show();
         } catch (Exception e) {

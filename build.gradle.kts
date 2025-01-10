@@ -2,6 +2,7 @@ plugins {
     id("java")
     application
     id("org.openjfx.javafxplugin") version "0.0.13"
+    id ("edu.sc.seis.launch4j") version "3.0.6"
 }
 
 group = "org.example"
@@ -23,7 +24,12 @@ javafx {
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
+launch4j {
+    mainClassName = "FXMLAppLauncher"
+    outfile.set("simplex.exe")
+    bundledJrePath.set("/usr/lib/jvm/java-21-openjdk-amd64")
+}
+
 application {
     mainClass = "FXMLAppLauncher"
-//    mainClass = "Hello"
 }
