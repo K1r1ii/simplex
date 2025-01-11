@@ -54,6 +54,20 @@ public class SimplexTable {
         this.steps = steps;
     }
 
+    // конструктор копирования
+    public SimplexTable(SimplexTable other) {
+        this.function = other.getFunction();
+        this.matrix = other.getMatrixObject();
+        this.base = other.getBase();
+        this.freeVars = other.getFreeVars();
+        this.isDecide = other.isDecide();
+        this.taskType = other.getTaskType();
+        this.fracType = other.getFracType();
+        this.mode = other.getMode();
+        this.steps = other.getSteps();
+        this.errorMassage = other.getErrorMassage();
+    }
+
 
     /**
      * Конструктор для инициализации новой симплекс-таблицы
@@ -171,6 +185,10 @@ public class SimplexTable {
      * @return String[][] - двумерный массив строк.
      */
     public String[][] getMatrixStr() {
+        if (matrix.getMatrix().length == 0) {
+            return null;
+        }
+
         Fraction[][] mtx = matrix.getMatrix();
         int rows = mtx.length;
         int columns = mtx[0].length;

@@ -70,6 +70,7 @@ public class ArtificialBasisMethod {
      * @return объект класса <code>SimplexTable</code>, содержащий симплекс-таблицу готовую к использованию в основном алгоритме
      */
     public static SimplexTable autoMode(SimplexTable simplexTable, ArrayList<Fraction> function) {
+
         boolean isDecide = simplexTable.isDecide();
          while (!isDecide) {
              simplexTable = artificialBasisStep(simplexTable, -1, -1, function);
@@ -105,8 +106,6 @@ public class ArtificialBasisMethod {
         // удаление нулевых строк
         newTable = deleteNullString(newTable);
 
-
-
         if (newTable.isDecide()) {
             int additionalVarNum = checkAdditionalVarInBasis(newTable, originalFunction);
             while (additionalVarNum != -1) {
@@ -125,7 +124,9 @@ public class ArtificialBasisMethod {
 
             // ставим метку перехода на симплекс метод
             Step lastStep = newTable.getLastStep();
-            lastStep.setEndAB(true);
+            if (lastStep != null) {
+                lastStep.setEndAB(true);
+            }
             return newTable;
         }
         Step laststep = newTable.getLastStep();

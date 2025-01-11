@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import dataStorage.Fraction;
 import dataStorage.Matrix;
+import dataStorage.SimplexTable;
 import dataStorage.Task;
 
 import java.io.File;
@@ -38,6 +39,26 @@ public class ReadTask {
             String fracType = rootNode.path("fracType").asText(); // тип дробей function
             String mode = rootNode.path("mode").asText(); // способ решения (ручной или авто)
 
+            // валидация данных
+            if (countVars < 1 || countVars > 16) {
+                return new Task("Некорректное количество переменных");
+            }
+
+            if (countRestrictions < 1 || countRestrictions > 16) {
+                return new Task("Некорректное количество ограничений");
+            }
+
+            if (!Objects.equals(taskType, SimplexTable.MAX_TYPE) && !Objects.equals(taskType, SimplexTable.MIN_TYPE)) {
+                return new Task("Некорректный тип задачи");
+            }
+
+            if (!Objects.equals(fracType, Fraction.DECIMAL) && !Objects.equals(fracType, Fraction.ORDINARY)) {
+                return new Task("Некорректный тип дробей");
+            }
+
+            if (!Objects.equals(mode, Task.MANUAL_MODE) && !Objects.equals(mode, Task.AUTO_MODE)) {
+                return new Task("Некорректный режим работы");
+            }
 
             // считывание базиса
             ArrayList<Integer> base = new ArrayList<>();

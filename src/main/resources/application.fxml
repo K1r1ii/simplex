@@ -28,7 +28,7 @@
                 <MenuItem onAction="#handleSaveTask" text="Сохранить задачу" />
             </Menu>
             <Menu text="Справка">
-                <MenuItem text="О программе" />
+                <MenuItem text="Руководство" onAction="#handleManual"/>
             </Menu>
         </MenuBar>
     </top>
@@ -171,12 +171,12 @@
                             </ComboBox>
                         </VBox>
                         <VBox fx:id="vBoxBasisVars" alignment="CENTER" prefHeight="198.0" prefWidth="181.0" spacing="10" />
-                        <VBox alignment="CENTER" prefHeight="198.0" prefWidth="181.0">
-                     <Button fx:id="readTaskButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#handleReadTask" prefHeight="26.0" prefWidth="135.0" text="считать задачу" wrapText="true">
-                        <VBox.margin>
-                           <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
-                        </VBox.margin>
-                     </Button>
+                        <VBox fx:id="taskButtonsBox" alignment="CENTER" prefHeight="198.0" prefWidth="181.0">
+                             <Button fx:id="readTaskButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#handleReadTask" prefHeight="26.0" prefWidth="135.0" text="считать задачу" wrapText="true">
+                                <VBox.margin>
+                                   <Insets bottom="20.0" left="10.0" right="10.0" top="10.0" />
+                                </VBox.margin>
+                             </Button>
                             <Button fx:id="simplexButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#handleSimplexMethod" prefHeight="26.0" prefWidth="135.0" text="симплекс метод" wrapText="true">
                                 <VBox.margin>
                                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

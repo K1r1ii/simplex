@@ -50,6 +50,12 @@ public class SimplexMethod {
         ArrayList<Integer> newFreeV = simplexTable.getFreeVars(); // новый список свободных переменных
 
         Fraction[][] matrix = simplexTable.getMatrix(); // исходная матрица
+        if (matrix.length == 0) {
+            if (SimplexMethod.isZeroFunction(simplexTable.getFunction())) {
+                return new SimplexTable("Функция не зависит от ограничений; f = 0");
+            }
+            return new SimplexTable("Функция не зависит от ограничений; f - неограниченна");
+        }
         Matrix newMatrix = new Matrix(matrix.length, matrix[0].length); // новая нулевая матрица
 
         ArrayList<Integer> coords; // список координат
@@ -511,5 +517,22 @@ public class SimplexMethod {
         }
 
         return new Solution(functionValue, solutionVector, simplexTable.getFracType());
+    }
+
+    /**
+     * Метод, проверяющий является ли функция нулевой
+     * @param function исходная функция
+     * @return <code>true</code> если функция нулевая
+     *         <code>false</code> иначе
+     */
+    private static boolean isZeroFunction(ArrayList<Fraction> function) {
+        boolean zeroFlag = true;
+        for (Fraction i : function) {
+            if (!i.equals(Fraction.ZERO)) {
+                zeroFlag = false;
+                break;
+            }
+        }
+        return zeroFlag;
     }
 }

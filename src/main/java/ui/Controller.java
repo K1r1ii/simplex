@@ -37,6 +37,7 @@ public class Controller {
     public TextField modeAB;
     public TextField basisAB;
     public Button readTaskButton;
+    public VBox taskButtonsBox;
 
     private SimplexTable currentSimplexTable;
     private Task currentTask;
@@ -307,6 +308,9 @@ public class Controller {
         // Очищаем старые поля
         gridPane.getChildren().clear();
 
+        // случай когда ограничений не осталось
+        if (mtx == null) return;
+
         int rows = mtx.length;
         int columns = mtx[0].length;
 
@@ -417,6 +421,9 @@ public class Controller {
         // Переходим на вкладку "симплекс метод"
         currentSimplexTable = SimplexMethod.gauss(currentTask);
 
+        // отключение кнопки перехода в симплекс метод
+        simplexButton.setDisable(true);
+
         if (currentSimplexTable.getErrorMassage() != null) {
             ErrorMessage.showError("Некорректные данные", currentSimplexTable.getErrorMassage());
             return;
@@ -480,6 +487,9 @@ public class Controller {
     private void handleArtificialBasisMethod() {
         // Переходим на вкладку "метод искусственного базиса"
         currentSimplexTable = ArtificialBasisMethod.createSimplexTable(currentTask);
+
+        // отключение кнопки перехода во вкладку ИБ
+        artificialBasisButton.setDisable(true);
 
         if (currentSimplexTable.getErrorMassage() != null) {
             ErrorMessage.showError("Некорректные данные", currentSimplexTable.getErrorMassage());
@@ -636,9 +646,8 @@ public class Controller {
 
     private void getSolutionAB() {
         // обработка действий при нажатии на кнопку "решить" во вкладке ИБ
-        SimplexTable simplexTable = ArtificialBasisMethod.autoMode(currentSimplexTable, currentTask.getFunction());
+        SimplexTable simplexTable = ArtificialBasisMethod.autoMode(new SimplexTable(currentSimplexTable), currentTask.getFunction());
 
-        // записываем 0 шаг симплекс метода
         if (simplexTable.getErrorMassage() != null) {
             ErrorMessage.showError("Некорректные данные", simplexTable.getErrorMassage());
             return;
@@ -856,5 +865,24 @@ public class Controller {
 
         }
         support = textField; // запись нового опорного элемента
+    }
+
+    @FXML
+    private void handleManual() {
+        // добавление текста
+        Label manualLabel = new Label();
+        manualLabel.setText(Constants.MANUAL);
+        manualLabel.setWrapText(true);
+
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(manualLabel);
+
+        // добавление вкладки
+        Tab manualTab = new Tab("Руководство");
+        manualTab.setClosable(true);
+        manualTab.setContent(scrollPane);
+
+        tabPane.getTabs().add(manualTab);
+        tabPane.getSelectionModel().select(manualTab);
     }
 }
